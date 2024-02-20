@@ -7,9 +7,9 @@
   "author": "",
   "license": "ISC",
   "scripts": {
-    "dev": "vite --mode dev",
-    "test": "vite --mode test",
-    "build": "vite build --mode prod",
+    "dev": "vite",
+    "test": "vite test",
+    "build": "vite build",
     "preview": "vite preview"
   },
   "devDependencies": {
