@@ -31,7 +31,18 @@ scene.add(axis);
 
 // 添加立方体
 const geometry = new THREE.BoxGeometry(3, 3, 3);
-const material = new THREE.MeshBasicMaterial({color: '#2c62e9'});
+// const material = new THREE.MeshBasicMaterial({color: '#2c62e9'});
+// 1.MeshBasicMaterial不受光源的影像，所以需要将Material改成MeshStandardMaterial；
+const material = new THREE.MeshStandardMaterial({color: '#2c62e9'});
+// 2.添加一个白色透明度为0.4的环境光，这个环境光会均匀地照亮场景中的所有物体表面，并且使用PBR（Physically-Based Rendering）渲染模型和材质自身的颜色进行混合得到新的颜色；
+const ambientLight = new THREE.AmbientLight('#ffffff', 0.4);
+scene.add(ambientLight);
+
+// 3.添加一个白色的方向光，方向光从(10, 0, 10)照向原点(10, 0, 10)， 所以有两个面会收到这个方向光，表面的颜色会更偏亮。
+const directionalLight = new THREE.DirectionalLight(0xffffff, 1);
+directionalLight.position.set(10, 0, 10);
+scene.add(directionalLight);
+
 const cube = new THREE.Mesh(geometry, material);
 // cube.rotateY(Math.PI / 4);
 scene.add(cube);
