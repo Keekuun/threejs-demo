@@ -32,9 +32,15 @@ scene.add(axis);
 const geometry = new THREE.BoxGeometry(3, 3, 3);
 const material = new THREE.MeshBasicMaterial({color: '#2c62e9'});
 const cube = new THREE.Mesh(geometry, material);
-cube.rotateY(Math.PI / 4);
+// cube.rotateY(Math.PI / 4);
 scene.add(cube);
 
-// 5. 渲染
-renderer.render(scene, camera);
+function animate() {
+  requestAnimationFrame(animate);
+  cube.rotateY(0.01);
 
+  // 5. 渲染
+  renderer.render(scene, camera);
+}
+
+animate();
