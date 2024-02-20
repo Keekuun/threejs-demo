@@ -1,5 +1,6 @@
 import '@unocss/reset/tailwind.css'
 import * as THREE from "three";
+import { OrbitControls } from "three/examples/jsm/controls/OrbitControls"
 
 // 1. 创建渲染器,指定渲染的分辨率和尺寸,然后添加到body中
 const renderer = new THREE.WebGLRenderer({antialias: true});
@@ -34,6 +35,10 @@ const material = new THREE.MeshBasicMaterial({color: '#2c62e9'});
 const cube = new THREE.Mesh(geometry, material);
 // cube.rotateY(Math.PI / 4);
 scene.add(cube);
+
+// 添加对场景内容进行旋转、放大缩小等控制操作
+const controls = new OrbitControls(camera, renderer.domElement);
+controls.update();
 
 function animate() {
   requestAnimationFrame(animate);
