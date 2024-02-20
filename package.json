@@ -21,7 +21,6 @@
   },
   "dependencies": {
     "@unocss/reset": "^0.58.5",
-    "three": "^0.154.0",
-    "vite-plugin-html": "^3.2.2"
+    "three": "^0.154.0"
   }
 }
