@@ -1,6 +1,5 @@
-export const clearCanvas = (ctx) => {
-  console.log('ctx', ctx)
-  ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height)
+export const clearCanvas = (ctx, canvas) => {
+  ctx.clearRect(0, 0, canvas.width, canvas.height)
 }
 export const drawCircle = (ctx, {x, y, r, color = 'blue'}) => {
   console.log('drawCircle ctx', ctx)
@@ -20,6 +19,13 @@ export const getMousePosition = e => ({
   x: e.offsetX,
   y: e.offsetY
 })
+
+export const getRealPosition = (e, dragInfo) => {
+  return {
+    x: (e.offsetX - dragInfo.offset.x) / dragInfo.scale,
+    y: (e.offsetY - dragInfo.offset.y) / dragInfo.scale
+  }
+}
 
 // 判断是否在圆中
 export const checkInCircle = (pos, circles) => {
