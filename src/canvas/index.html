@@ -6,9 +6,17 @@
         content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
   <meta http-equiv="X-UA-Compatible" content="ie=edge">
   <title>canvas</title>
+
+  <style>
+    * {
+      padding: 0;
+      margin: 0
+    }
+  </style>
 </head>
 <body>
-<canvas id="canvas" width="800px" height="800px" class="w-2xl h-2xl border border-solid border-red"></canvas>
+<!--画布宽高要和css宽高保持一致-->
+<canvas id="canvas" width="800px" height="600px" class="w-[800px] h-[600px] border border-solid border-red absolute top-0 left-0"></canvas>
 <script type="module" src="./index.mjs"></script>
 </body>
 </html>

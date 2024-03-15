@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Canvas 图形拖拽缩放</title>
+</head>
+<style>
+  #chart-wrap {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    margin: auto;
+  }
+</style>
+<body>
+<canvas id="myCanvas"></canvas>
+<script>
+  // 圆形类
+  function Circle(x, y, r) {
+    this.x = x;
+    this.y = y;
+    this.r = r;
+    this.draw = function() {
+      ctx.beginPath();
+      ctx.arc(this.x, this.y, this.r, 0, 2 * Math.PI);
+      ctx.fillStyle = "red";
+      ctx.fill();
+    };
+  }
+  // 矩形类
+  function Rectangle(x, y, w, h) {
+    this.x = x;
+    this.y = y;
+    this.w = w;
+    this.h = h;
+    this.draw = function() {
+      ctx.beginPath();
+      ctx.rect(this.x, this.y, this.w, this.h);
+      ctx.fillStyle = "blue";
+      ctx.fill();
+    };
+  }
+  // 直线类
+  function Line(x1, y1, x2, y2) {
+    this.x1 = x1;
+    this.y1 = y1;
+    this.x2 = x2;
+    this.y2 = y2;
+    this.draw = function() {
+      ctx.beginPath();
+      ctx.moveTo(this.x1, this.y1);
+      ctx.lineTo(this.x2, this.y2);
+      ctx.strokeStyle = "black";
+      ctx.stroke();
+    };
+  }
+  // 初始化函数
+  function init() {
+    // 获取 canvas 元素
+    canvas = document.getElementById("myCanvas");
+    // 获取上下文
+    ctx = canvas.getContext("2d");
+    // 监听鼠标滚动事件
+    canvas.addEventListener("wheel", scrollFunc, false);
+    // 监听鼠标移动事件
+    canvas.addEventListener("mousemove", moveFunc, false);
+  }
+  // 绘制函数
+  function draw() {
+    // 清屏
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    // 保存当前缩放值
+    this.scale = ctx.getTransform().scaleX;
+    // 绘制圆形
+    if (type == 0) {
+      new Circle(100, 100, 50).draw();
+    }
+    // 绘制矩形
+    if (type == 1) {
+      new Rectangle(100, 100, 100, 100).draw();
+    }
+    // 绘制直线
+    if (type == 2) {
+      new Line(100, 100, 200, 200).draw();
+    }
+    // 重新绘制
+    // ctx.redraw();
+  }
+  // 鼠标滚动事件处理函数
+  function scrollFunc(e) {
+    e.preventDefault();
+
+    console.log('scrollFunc', e)
+    if (e.wheelDelta > 0) {
+      // 放大
+      scale += 0.1;
+    } else {
+      // 缩小
+      scale -= 0.1;
+    }
+    // 设置当前缩放值
+    ctx.setTransform(scale, 1, 1, scale, 0, 0);
+    // 重新绘制
+    draw();
+  }
+  // 鼠标移动事件处理函数
+  function moveFunc(e) {
+    x = e.clientX - offsetX;
+    y = e.clientY - offsetY;
+    // 计算新的缩放中心
+    offsetX = x - (x / scale) * scale;
+    offsetY = y - (y / scale) * scale;
+    // 重新设置当前的变换矩阵
+    ctx.setTransform(scale, 1, 1, scale, offsetX, offsetY);
+    // 重新绘制
+    draw();
+  }
+  // 初始化函数
+  init();
+  // 绘制类型
+  var type = 0;
+  // 绘图
+  function drawShape() {
+    type++;
+    if (type > 2) {
+      type = 0;
+    }
+    draw();
+  }
+  drawShape()
+  // setInterval(drawShape, 1000);
+</script>
+</body>
+</html>
