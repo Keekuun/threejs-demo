@@ -7,15 +7,15 @@ import {
   getMousePosition,
   getRealPosition
 } from "@/canvas/util.mjs";
-import {DRAG_CONFIG} from "@/canvas/DRAG_CONFIG.mjs";
+import {Config} from "@/canvas/config.mjs";
 
 console.log('canvas')
 
 const canvas = document.getElementById('canvas')
 const ctx = canvas.getContext('2d')
 
-let dragInfo = {
-  dragStatus: DRAG_CONFIG.IDLE,
+let transformInfo = {
+  dragStatus: Config.IDLE,
   dragTarget: null,
   // 0-圆 1-rect
   dragTargetType: -1,
@@ -27,6 +27,8 @@ let dragInfo = {
   maxScale: 2,
   minScale: 0.5,
   offset: {x: 0, y: 0},
+
+
 }
 
 const circles = [
@@ -44,15 +46,15 @@ function drawCircles() {
 drawCircles()
 canvas.addEventListener('mousedown', (e) => {
   e.preventDefault()
-  const realPos = getRealPosition(e, dragInfo)
+  const realPos = getRealPosition(e, transformInfo)
 
   const circle = checkInCircle(realPos, circles)
   if (circle) {
     // 作用在圆上面
     console.log('set start drag circle:', circle)
-    dragInfo = {
-      ...dragInfo,
-      dragStatus: DRAG_CONFIG.DRAG_START,
+    transformInfo = {
+      ...transformInfo,
+      dragStatus: Config.DRAG_START,
       lastEventPos: realPos,
       offsetEventPos: realPos,
       dragTarget: circle,
@@ -62,7 +64,7 @@ canvas.addEventListener('mousedown', (e) => {
 })
 canvas.addEventListener('mousemove', (e) => {
   e.preventDefault()
-  const realPos = getRealPosition(e, dragInfo)
+  const realPos = getRealPosition(e, transformInfo)
 
   const circle = checkInCircle(realPos, circles)
   if(circle) {
@@ -71,24 +73,24 @@ canvas.addEventListener('mousemove', (e) => {
     ctx.canvas.style.cursor = ''
   }
 
-  if (dragInfo.dragStatus === DRAG_CONFIG.DRAG_START) {
-    const distance = getDistance(realPos, dragInfo.lastEventPos)
+  if (transformInfo.dragStatus === Config.DRAG_START) {
+    const distance = getDistance(realPos, transformInfo.lastEventPos)
     if (distance > 5) {
-      console.log('dragging target:', dragInfo.dragTarget)
+      console.log('dragging target:', transformInfo.dragTarget)
       // dragging
-      dragInfo.dragStatus = DRAG_CONFIG.DRAGGING
-      dragInfo.offsetEventPos = realPos
-      console.log('start dragging: ', dragInfo.dragTarget)
+      transformInfo.dragStatus = Config.DRAGGING
+      transformInfo.offsetEventPos = realPos
+      console.log('start dragging: ', transformInfo.dragTarget)
     }
     return
   }
 
-  if (dragInfo.dragStatus === DRAG_CONFIG.DRAGGING) {
+  if (transformInfo.dragStatus === Config.DRAGGING) {
     // reDraw
-    const {dragTargetType, dragTarget} = dragInfo
+    const {dragTargetType, dragTarget} = transformInfo
     if (dragTargetType === 0) {
-      dragTarget.x += (realPos.x - dragInfo.offsetEventPos.x)
-      dragTarget.y += (realPos.y - dragInfo.offsetEventPos.y)
+      dragTarget.x += (realPos.x - transformInfo.offsetEventPos.x)
+      dragTarget.y += (realPos.y - transformInfo.offsetEventPos.y)
 
       // update circle pos
       circles.forEach(c => {
@@ -101,7 +103,7 @@ canvas.addEventListener('mousemove', (e) => {
       clearCanvas(ctx, canvas)
       drawCircles()
 
-      dragInfo.offsetEventPos = realPos
+      transformInfo.offsetEventPos = realPos
     }
   }
 
@@ -109,12 +111,12 @@ canvas.addEventListener('mousemove', (e) => {
 
 canvas.addEventListener('mouseup', (e) => {
   e.preventDefault()
-  if (dragInfo.dragStatus === DRAG_CONFIG.DRAGGING) {
-    dragInfo = {
-      ...dragInfo,
-      dragStatus: DRAG_CONFIG.IDLE,
+  if (transformInfo.dragStatus === Config.DRAGGING) {
+    transformInfo = {
+      ...transformInfo,
+      dragStatus: Config.IDLE,
     }
-    console.log('dragging end: ', dragInfo.dragTarget)
+    console.log('dragging end: ', transformInfo.dragTarget)
     ctx.canvas.style.cursor = ''
   }
 })
@@ -124,24 +126,24 @@ canvas.addEventListener('wheel', (e) => {
   const mousePos = getMousePosition(e)
   // 怎么理解 ？
   const realPos = {
-    x: mousePos.x - dragInfo.offset.x,
-    y: mousePos.y - dragInfo.offset.y
+    x: mousePos.x - transformInfo.offset.x,
+    y: mousePos.y - transformInfo.offset.y
   }
 
-  const {scale, scaleStep, maxScale, minScale} = dragInfo
+  const {scale, scaleStep, maxScale, minScale} = transformInfo
   const deltaX = realPos.x / scale * scaleStep
   const deltaY = realPos.y / scale * scaleStep
 
-  if(e.wheelDelta > 0 && dragInfo.scale < maxScale) {
+  if(e.wheelDelta > 0 && transformInfo.scale < maxScale) {
     console.log('up')
-    dragInfo.offset.x -= deltaX
-    dragInfo.offset.y -= deltaY
-    dragInfo.scale += scaleStep
-  } else if(e.wheelDelta <= 0 &&  dragInfo.scale > minScale) {
+    transformInfo.offset.x -= deltaX
+    transformInfo.offset.y -= deltaY
+    transformInfo.scale += scaleStep
+  } else if(e.wheelDelta <= 0 &&  transformInfo.scale > minScale) {
     console.log('down')
-    dragInfo.offset.x += deltaX
-    dragInfo.offset.y += deltaY
-    dragInfo.scale -= scaleStep
+    transformInfo.offset.x += deltaX
+    transformInfo.offset.y += deltaY
+    transformInfo.scale -= scaleStep
   }
   /**
    * setTransform(a: number, b: number, c: number, d: number, e: number, f: number): void;
@@ -152,7 +154,7 @@ canvas.addEventListener('wheel', (e) => {
    * e：水平偏移量。
    * f：垂直偏移量。
    * */
-  ctx.setTransform(dragInfo.scale, 0, 0, dragInfo.scale, dragInfo.offset.x, dragInfo.offset.y)
+  ctx.setTransform(transformInfo.scale, 0, 0, transformInfo.scale, transformInfo.offset.x, transformInfo.offset.y)
   clearCanvas(ctx, canvas)
   drawCircles()
 })

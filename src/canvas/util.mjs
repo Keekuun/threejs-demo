@@ -20,10 +20,10 @@ export const getMousePosition = e => ({
   y: e.offsetY
 })
 
-export const getRealPosition = (e, dragInfo) => {
+export const getRealPosition = (e, transformInfo) => {
   return {
-    x: (e.offsetX - dragInfo.offset.x) / dragInfo.scale,
-    y: (e.offsetY - dragInfo.offset.y) / dragInfo.scale
+    x: (e.offsetX - transformInfo.offset.x) / transformInfo.scale,
+    y: (e.offsetY - transformInfo.offset.y) / transformInfo.scale
   }
 }
 
