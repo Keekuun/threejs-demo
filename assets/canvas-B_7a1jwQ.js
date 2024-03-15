@@ -1,1 +1,0 @@
-import"./__uno-CNn84-in.js";console.log("canvas");const l=document.getElementById("canvas"),o=l.getContext("2d"),a=(e,n,s,t,r="blue")=>{e.save(),e.beginPath(),e.strokeStyle=r,e.arc(n,s,t,0,Math.PI*2),e.stroke(),e.closePath(),e.restore()};a(o,100,100,50);a(o,400,400,80,"green");
