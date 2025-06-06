@@ -1,0 +1,1170 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>音频质量分析工具</title>
+  <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.8/dist/chart.umd.min.js"></script>
+  <script>
+      tailwind.config = {
+          theme: {
+              extend: {
+                  colors: {
+                      primary: '#3B82F6',
+                      secondary: '#10B981',
+                      accent: '#F59E0B',
+                      danger: '#EF4444',
+                      dark: '#1E293B',
+                      light: '#F8FAFC'
+                  },
+                  fontFamily: {
+                      inter: ['Inter', 'sans-serif'],
+                  },
+              },
+          }
+      }
+  </script>
+  <style>
+      @layer utilities {
+          .content-auto {
+              content-visibility: auto;
+          }
+          .audio-wave {
+              height: 80px;
+              display: flex;
+              align-items: center;
+              gap: 2px;
+              justify-content: center;
+          }
+          .audio-wave span {
+              width: 3px;
+              height: 16px;
+              background: linear-gradient(to bottom, #3B82F6, #2563EB);
+              border-radius: 3px;
+              animation: wave 1s infinite ease-in-out;
+          }
+          @keyframes wave {
+              0%, 100% { transform: scaleY(0.3); }
+              50% { transform: scaleY(1); }
+          }
+          .audio-wave span:nth-child(2) { animation-delay: 0.1s; }
+          .audio-wave span:nth-child(3) { animation-delay: 0.2s; }
+          .audio-wave span:nth-child(4) { animation-delay: 0.3s; }
+          .audio-wave span:nth-child(5) { animation-delay: 0.4s; }
+          .audio-wave span:nth-child(6) { animation-delay: 0.5s; }
+          .audio-wave span:nth-child(7) { animation-delay: 0.6s; }
+          .audio-wave span:nth-child(8) { animation-delay: 0.7s; }
+          .audio-wave span:nth-child(9) { animation-delay: 0.8s; }
+          .audio-wave span:nth-child(10) { animation-delay: 0.9s; }
+      }
+  </style>
+</head>
+<body class="bg-gray-50 font-inter text-dark min-h-screen flex flex-col">
+<!-- 顶部导航 -->
+<header class="bg-white shadow-sm sticky top-0 z-10">
+  <div class="container mx-auto px-4 py-3 flex justify-between items-center">
+    <div class="flex items-center space-x-2">
+      <i class="fa fa-microphone text-primary text-2xl"></i>
+      <h1 class="text-xl font-bold text-dark">音频质量分析工具</h1>
+    </div>
+    <div class="flex items-center space-x-4">
+      <button id="helpBtn" class="text-gray-600 hover:text-primary transition-colors duration-200">
+        <i class="fa fa-question-circle"></i>
+        <span class="hidden md:inline ml-1">帮助</span>
+      </button>
+    </div>
+  </div>
+</header>
+
+<!-- 主内容区 -->
+<main class="flex-grow container mx-auto px-4 py-8">
+  <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+    <!-- 左侧：录音控制区 -->
+    <div class="lg:col-span-1">
+      <div class="bg-white rounded-xl shadow-md p-6 h-full flex flex-col">
+        <h2 class="text-lg font-semibold mb-4 flex items-center">
+          <i class="fa fa-circle text-primary mr-2"></i>录音控制
+        </h2>
+
+        <div id="recorderContainer" class="flex-grow flex flex-col justify-center items-center">
+          <!-- 初始状态 -->
+          <div id="initialState" class="text-center">
+            <div class="w-24 h-24 bg-primary/10 rounded-full flex items-center justify-center mb-4 mx-auto">
+              <i class="fa fa-microphone text-primary text-4xl"></i>
+            </div>
+            <p class="text-gray-600 mb-6">点击下方按钮开始录音</p>
+            <button id="startRecordBtn" class="bg-primary hover:bg-primary/90 text-white py-3 px-8 rounded-full transition-all duration-200 shadow-md hover:shadow-lg flex items-center">
+              <i class="fa fa-circle mr-2"></i>开始录音
+            </button>
+          </div>
+
+          <!-- 录音中状态 -->
+          <div id="recordingState" class="text-center hidden">
+            <div class="audio-wave mb-4">
+              <span></span><span></span><span></span><span></span><span></span>
+              <span></span><span></span><span></span><span></span><span></span>
+            </div>
+            <p class="text-gray-600 mb-6">录音中 <span id="recordingTime">00:00</span></p>
+            <div class="flex space-x-4 justify-center">
+              <button id="pauseRecordBtn" class="bg-gray-200 hover:bg-gray-300 text-dark py-3 px-6 rounded-full transition-all duration-200 shadow-sm hover:shadow-md flex items-center">
+                <i class="fa fa-pause mr-2"></i>暂停
+              </button>
+              <button id="stopRecordBtn" class="bg-danger hover:bg-danger/90 text-white py-3 px-6 rounded-full transition-all duration-200 shadow-md hover:shadow-lg flex items-center">
+                <i class="fa fa-stop mr-2"></i>停止
+              </button>
+            </div>
+          </div>
+
+          <!-- 已暂停状态 -->
+          <div id="pausedState" class="text-center hidden">
+            <div class="w-24 h-24 bg-gray-200 rounded-full flex items-center justify-center mb-4 mx-auto">
+              <i class="fa fa-pause text-gray-500 text-4xl"></i>
+            </div>
+            <p class="text-gray-600 mb-6">录音已暂停 <span id="pausedTime">00:00</span></p>
+            <div class="flex space-x-4 justify-center">
+              <button id="resumeRecordBtn" class="bg-primary hover:bg-primary/90 text-white py-3 px-6 rounded-full transition-all duration-200 shadow-md hover:shadow-lg flex items-center">
+                <i class="fa fa-microphone mr-2"></i>继续录音
+              </button>
+              <button id="resetRecordBtn" class="bg-gray-200 hover:bg-gray-300 text-dark py-3 px-6 rounded-full transition-all duration-200 shadow-sm hover:shadow-md flex items-center">
+                <i class="fa fa-refresh mr-2"></i>重置
+              </button>
+            </div>
+          </div>
+
+          <!-- 已完成状态 -->
+          <div id="completedState" class="text-center hidden">
+            <div class="w-24 h-24 bg-secondary/10 rounded-full flex items-center justify-center mb-4 mx-auto">
+              <i class="fa fa-check text-secondary text-4xl"></i>
+            </div>
+            <p class="text-gray-600 mb-6">录音已完成，时长 <span id="completedTime">00:00</span></p>
+            <div class="flex space-x-4 justify-center">
+              <button id="playRecordBtn" class="bg-primary hover:bg-primary/90 text-white py-3 px-6 rounded-full transition-all duration-200 shadow-md hover:shadow-lg flex items-center">
+                <i class="fa fa-play mr-2"></i>播放
+              </button>
+              <button id="analyzeBtn" class="bg-accent hover:bg-accent/90 text-white py-3 px-6 rounded-full transition-all duration-200 shadow-md hover:shadow-lg flex items-center">
+                <i class="fa fa-bar-chart mr-2"></i>分析音频
+              </button>
+            </div>
+            <div class="mt-6">
+              <audio id="recordedAudio" controls class="w-full"></audio>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 右侧：分析结果展示 -->
+    <div class="lg:col-span-2">
+      <div class="bg-white rounded-xl shadow-md p-6 h-full flex flex-col">
+        <h2 class="text-lg font-semibold mb-4 flex items-center">
+          <i class="fa fa-bar-chart text-accent mr-2"></i>音频质量分析
+        </h2>
+
+        <div id="analysisPlaceholder" class="flex-grow flex flex-col justify-center items-center text-center py-12">
+          <div class="w-24 h-24 bg-gray-100 rounded-full flex items-center justify-center mb-4">
+            <i class="fa fa-file-audio-o text-gray-400 text-4xl"></i>
+          </div>
+          <p class="text-gray-500 mb-2">暂无分析数据</p>
+          <p class="text-gray-400 text-sm">录制音频并点击"分析音频"按钮开始分析</p>
+        </div>
+
+        <div id="analysisResults" class="hidden flex-grow">
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <!-- 音频波形图 -->
+            <div class="bg-gray-50 rounded-lg p-4">
+              <h3 class="font-medium mb-3 flex items-center">
+                <i class="fa fa-area-chart text-primary mr-2"></i>波形图
+              </h3>
+              <div class="h-48">
+                <canvas id="waveformChart"></canvas>
+              </div>
+            </div>
+
+            <!-- 频谱图 -->
+            <div class="bg-gray-50 rounded-lg p-4">
+              <h3 class="font-medium mb-3 flex items-center">
+                <i class="fa fa-line-chart text-secondary mr-2"></i>频谱图
+              </h3>
+              <div class="h-48">
+                <canvas id="spectrumChart"></canvas>
+              </div>
+            </div>
+
+            <!-- 质量指标 -->
+            <div class="bg-gray-50 rounded-lg p-4 md:col-span-2">
+              <h3 class="font-medium mb-3 flex items-center">
+                <i class="fa fa-tachometer text-accent mr-2"></i>质量指标
+              </h3>
+              <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
+                <div class="bg-white p-3 rounded shadow-sm">
+                  <p class="text-sm text-gray-500 mb-1">平均响度</p>
+                  <div class="flex items-end justify-between">
+                    <p id="loudnessValue" class="text-xl font-semibold">-∞ dB</p>
+                    <div class="w-16 h-2 bg-gray-200 rounded-full overflow-hidden">
+                      <div id="loudnessBar" class="h-full bg-primary rounded-full" style="width: 0%"></div>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="bg-white p-3 rounded shadow-sm">
+                  <p class="text-sm text-gray-500 mb-1">清晰度</p>
+                  <div class="flex items-end justify-between">
+                    <p id="clarityValue" class="text-xl font-semibold">--</p>
+                    <div class="w-16 h-2 bg-gray-200 rounded-full overflow-hidden">
+                      <div id="clarityBar" class="h-full bg-secondary rounded-full" style="width: 0%"></div>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="bg-white p-3 rounded shadow-sm">
+                  <p class="text-sm text-gray-500 mb-1">噪声水平</p>
+                  <div class="flex items-end justify-between">
+                    <p id="noiseValue" class="text-xl font-semibold">--</p>
+                    <div class="w-16 h-2 bg-gray-200 rounded-full overflow-hidden">
+                      <div id="noiseBar" class="h-full bg-danger rounded-full" style="width: 0%"></div>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="bg-white p-3 rounded shadow-sm">
+                  <p class="text-sm text-gray-500 mb-1">整体评分</p>
+                  <div class="flex items-end justify-between">
+                    <p id="overallScore" class="text-xl font-semibold">--</p>
+                    <div class="flex text-yellow-400">
+                      <i class="fa fa-star"></i>
+                      <i class="fa fa-star"></i>
+                      <i class="fa fa-star"></i>
+                      <i class="fa fa-star"></i>
+                      <i class="fa fa-star"></i>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- 频率响应 -->
+            <div class="bg-gray-50 rounded-lg p-4 md:col-span-2">
+              <h3 class="font-medium mb-3 flex items-center">
+                <i class="fa fa-signal text-primary mr-2"></i>频率响应
+              </h3>
+              <div class="h-48">
+                <canvas id="frequencyChart"></canvas>
+              </div>
+            </div>
+
+            <!-- 分析建议 -->
+            <div class="bg-gray-50 rounded-lg p-4 md:col-span-2">
+              <h3 class="font-medium mb-3 flex items-center">
+                <i class="fa fa-lightbulb-o text-accent mr-2"></i>改进建议
+              </h3>
+              <div id="analysisRecommendations" class="bg-white p-4 rounded-lg border border-gray-100 min-h-[100px]">
+                <p class="text-gray-500 italic">完成音频分析后将显示改进建议...</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</main>
+
+<!-- 帮助模态框 -->
+<div id="helpModal" class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 hidden">
+  <div class="bg-white rounded-xl shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+    <div class="p-6 border-b">
+      <div class="flex justify-between items-center">
+        <h3 class="text-xl font-bold">使用帮助</h3>
+        <button id="closeHelpBtn" class="text-gray-400 hover:text-gray-600">
+          <i class="fa fa-times"></i>
+        </button>
+      </div>
+    </div>
+    <div class="p-6">
+      <div class="space-y-4">
+        <div>
+          <h4 class="font-semibold mb-2">如何使用本工具</h4>
+          <ol class="list-decimal list-inside space-y-2 text-gray-700">
+            <li>点击"开始录音"按钮开始录制音频</li>
+            <li>如需暂停录音，点击"暂停"按钮</li>
+            <li>完成录音后，点击"停止"按钮</li>
+            <li>可以点击"播放"按钮预览录制的音频</li>
+            <li>点击"分析音频"按钮获取音频质量分析结果</li>
+          </ol>
+        </div>
+
+        <div>
+          <h4 class="font-semibold mb-2">指标说明</h4>
+          <dl class="space-y-2 text-gray-700">
+            <dt class="font-medium">平均响度</dt>
+            <dd>音频的平均音量水平，以分贝(dB)为单位</dd>
+
+            <dt class="font-medium">清晰度</dt>
+            <dd>语音清晰度评分，基于频率平衡和噪声水平</dd>
+
+            <dt class="font-medium">噪声水平</dt>
+            <dd>背景噪声的相对强度，低噪声表示更纯净的音频</dd>
+
+            <dt class="font-medium">整体评分</dt>
+            <dd>基于多个指标的综合评分(1-5星)</dd>
+          </dl>
+        </div>
+
+        <div>
+          <h4 class="font-semibold mb-2">录音建议</h4>
+          <ul class="list-disc list-inside space-y-2 text-gray-700">
+            <li>使用质量较好的麦克风</li>
+            <li>保持麦克风与嘴部适当距离(约10-15厘米)</li>
+            <li>在安静的环境中录音，减少背景噪声</li>
+            <li>避免直接对着麦克风呼吸</li>
+            <li>说话时保持稳定的音量</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+    <div class="p-6 border-t flex justify-end">
+      <button id="closeHelpBtn2" class="bg-primary hover:bg-primary/90 text-white py-2 px-6 rounded-full transition-all duration-200 shadow-md hover:shadow-lg">
+        确定
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- 页脚 -->
+<footer class="bg-dark text-white py-6">
+  <div class="container mx-auto px-4">
+    <div class="flex flex-col md:flex-row justify-between items-center">
+      <div class="mb-4 md:mb-0">
+        <p class="text-gray-400 text-sm">&copy; 2025 音频质量分析工具 | 保护你的听力健康</p>
+      </div>
+      <div class="flex space-x-4">
+        <a href="#" class="text-gray-400 hover:text-white transition-colors duration-200">
+          <i class="fa fa-github"></i>
+        </a>
+        <a href="#" class="text-gray-400 hover:text-white transition-colors duration-200">
+          <i class="fa fa-twitter"></i>
+        </a>
+        <a href="#" class="text-gray-400 hover:text-white transition-colors duration-200">
+          <i class="fa fa-linkedin"></i>
+        </a>
+      </div>
+    </div>
+  </div>
+</footer>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // 初始化变量
+        let mediaRecorder;
+        let audioChunks = [];
+        let audioBlob;
+        let audioUrl;
+        let audioContext;
+        let analyser;
+        let dataArray;
+        let bufferLength;
+        let source;
+        let isRecording = false;
+        let isPaused = false;
+        let recordingTime = 0;
+        let recordingInterval;
+
+        // 获取DOM元素
+        const startRecordBtn = document.getElementById('startRecordBtn');
+        const pauseRecordBtn = document.getElementById('pauseRecordBtn');
+        const stopRecordBtn = document.getElementById('stopRecordBtn');
+        const resumeRecordBtn = document.getElementById('resumeRecordBtn');
+        const resetRecordBtn = document.getElementById('resetRecordBtn');
+        const playRecordBtn = document.getElementById('playRecordBtn');
+        const analyzeBtn = document.getElementById('analyzeBtn');
+        const recordedAudio = document.getElementById('recordedAudio');
+        const recordingTimeEl = document.getElementById('recordingTime');
+        const pausedTimeEl = document.getElementById('pausedTime');
+        const completedTimeEl = document.getElementById('completedTime');
+
+        const initialState = document.getElementById('initialState');
+        const recordingState = document.getElementById('recordingState');
+        const pausedState = document.getElementById('pausedState');
+        const completedState = document.getElementById('completedState');
+
+        const analysisPlaceholder = document.getElementById('analysisPlaceholder');
+        const analysisResults = document.getElementById('analysisResults');
+
+        // 帮助模态框
+        const helpBtn = document.getElementById('helpBtn');
+        const helpModal = document.getElementById('helpModal');
+        const closeHelpBtn = document.getElementById('closeHelpBtn');
+        const closeHelpBtn2 = document.getElementById('closeHelpBtn2');
+
+        // 质量指标元素
+        const loudnessValue = document.getElementById('loudnessValue');
+        const clarityValue = document.getElementById('clarityValue');
+        const noiseValue = document.getElementById('noiseValue');
+        const overallScore = document.getElementById('overallScore');
+        const loudnessBar = document.getElementById('loudnessBar');
+        const clarityBar = document.getElementById('clarityBar');
+        const noiseBar = document.getElementById('noiseBar');
+        const analysisRecommendations = document.getElementById('analysisRecommendations');
+
+        // 图表初始化
+        let waveformChart, spectrumChart, frequencyChart;
+
+        // 帮助模态框事件
+        helpBtn.addEventListener('click', () => {
+            helpModal.classList.remove('hidden');
+        });
+
+        [closeHelpBtn, closeHelpBtn2].forEach(btn => {
+            btn.addEventListener('click', () => {
+                helpModal.classList.add('hidden');
+            });
+        });
+
+        helpModal.addEventListener('click', (e) => {
+            if (e.target === helpModal) {
+                helpModal.classList.add('hidden');
+            }
+        });
+
+        // 录音控制事件
+        startRecordBtn.addEventListener('click', startRecording);
+        pauseRecordBtn.addEventListener('click', pauseRecording);
+        stopRecordBtn.addEventListener('click', stopRecording);
+        resumeRecordBtn.addEventListener('click', resumeRecording);
+        resetRecordBtn.addEventListener('click', resetRecording);
+        playRecordBtn.addEventListener('click', playRecording);
+        analyzeBtn.addEventListener('click', analyzeAudio);
+
+        // 更新时间显示
+        function updateTimeDisplay(el) {
+            const minutes = Math.floor(recordingTime / 60);
+            const seconds = recordingTime % 60;
+            el.textContent = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+        }
+
+        // 开始录音
+        function startRecording0() {
+            navigator.mediaDevices.getUserMedia({ audio: true })
+                .then(stream => {
+                    // 初始化音频上下文
+                    if (!audioContext) {
+                        audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                    }
+
+                    // 创建音频分析器
+                    analyser = audioContext.createAnalyser();
+                    analyser.fftSize = 2048;
+                    bufferLength = analyser.frequencyBinCount;
+                    dataArray = new Uint8Array(bufferLength);
+
+                    // 创建媒体源并连接分析器
+                    source = audioContext.createMediaStreamSource(stream);
+                    source.connect(analyser);
+
+                    // 初始化录音机
+                    mediaRecorder = new MediaRecorder(stream);
+                    mediaRecorder.ondataavailable = event => {
+                        if (event.data.size > 0) {
+                            audioChunks.push(event.data);
+                        }
+                    };
+
+                    mediaRecorder.onstop = () => {
+                        audioBlob = new Blob(audioChunks, { type: 'audio/wav' });
+                        audioUrl = URL.createObjectURL(audioBlob);
+                        recordedAudio.src = audioUrl;
+
+                        // 释放资源
+                        stream.getTracks().forEach(track => track.stop());
+                    };
+
+                    // 开始录音
+                    mediaRecorder.start();
+                    isRecording = true;
+                    isPaused = false;
+
+                    // 更新UI
+                    initialState.classList.add('hidden');
+                    recordingState.classList.remove('hidden');
+                    pausedState.classList.add('hidden');
+                    completedState.classList.add('hidden');
+
+                    // 开始计时
+                    recordingInterval = setInterval(() => {
+                        recordingTime++;
+                        updateTimeDisplay(recordingTimeEl);
+                    }, 1000);
+                })
+                .catch(error => {
+                    console.error('录音权限被拒绝:', error);
+                    alert('请允许麦克风访问权限以使用录音功能');
+                });
+        }
+
+        // 开始录音
+        function startRecording() {
+            navigator.mediaDevices
+                .getUserMedia({ audio: true })
+                .then((stream) => {
+                    // 初始化音频上下文
+                    if (!audioContext) {
+                        audioContext = new (window.AudioContext ||
+                            window.webkitAudioContext)();
+                    }
+
+                    // 创建音频分析器
+                    analyser = audioContext.createAnalyser();
+                    analyser.fftSize = 2048;
+                    bufferLength = analyser.frequencyBinCount;
+                    dataArray = new Uint8Array(bufferLength);
+
+                    // 创建媒体源并连接分析器
+                    source = audioContext.createMediaStreamSource(stream);
+                    source.connect(analyser);
+
+                    // 初始化录音机
+                    mediaRecorder = new MediaRecorder(stream);
+                    mediaRecorder.ondataavailable = (event) => {
+                        if (event.data.size > 0) {
+                            audioChunks.push(event.data);
+                        }
+                    };
+
+                    mediaRecorder.onstop = () => {
+                        audioBlob = new Blob(audioChunks, { type: "audio/wav" });
+                        audioUrl = URL.createObjectURL(audioBlob);
+                        recordedAudio.src = audioUrl;
+
+                        // 释放资源
+                        stream.getTracks().forEach((track) => track.stop());
+                        clearInterval(updateWaveInterval);
+                    };
+
+                    // 开始录音
+                    mediaRecorder.start();
+                    isRecording = true;
+                    isPaused = false;
+
+                    // 更新UI
+                    initialState.classList.add("hidden");
+                    recordingState.classList.remove("hidden");
+                    pausedState.classList.add("hidden");
+                    completedState.classList.add("hidden");
+
+                    // 开始计时
+                    recordingInterval = setInterval(() => {
+                        recordingTime++;
+                        updateTimeDisplay(recordingTimeEl);
+                    }, 1000);
+
+                    // 更新波形
+                    const audioWaveSpans = document.querySelectorAll(".audio-wave span");
+                    updateWaveInterval = setInterval(() => {
+                        analyser.getByteFrequencyData(dataArray);
+                        const averageVolume =
+                            dataArray.reduce((sum, value) => sum + value, 0) / bufferLength;
+                        const maxHeight = 80; // 波形最大高度
+                        const scaleFactor = maxHeight / 255; // 音量范围是0-255
+
+                        audioWaveSpans.forEach((span, index) => {
+                            const volume = dataArray[index % bufferLength];
+                            const height = Math.min(maxHeight, volume * scaleFactor);
+                            span.style.height = `${height}px`;
+                        });
+                    }, 50);
+                })
+                .catch((error) => {
+                    console.error("录音权限被拒绝:", error);
+                    alert("请允许麦克风访问权限以使用录音功能");
+                });
+        }
+
+        // 暂停录音
+        function pauseRecording() {
+            if (mediaRecorder && isRecording && !isPaused) {
+                mediaRecorder.pause();
+                isPaused = true;
+
+                // 更新UI
+                recordingState.classList.add('hidden');
+                pausedState.classList.remove('hidden');
+
+                // 停止计时
+                clearInterval(recordingInterval);
+                updateTimeDisplay(pausedTimeEl);
+            }
+        }
+
+        // 恢复录音
+        function resumeRecording() {
+            if (mediaRecorder && isRecording && isPaused) {
+                mediaRecorder.resume();
+                isPaused = false;
+
+                // 更新UI
+                recordingState.classList.remove('hidden');
+                pausedState.classList.add('hidden');
+
+                // 恢复计时
+                recordingInterval = setInterval(() => {
+                    recordingTime++;
+                    updateTimeDisplay(recordingTimeEl);
+                }, 1000);
+            }
+        }
+
+        // 停止录音
+        function stopRecording() {
+            if (mediaRecorder && (isRecording || isPaused)) {
+                mediaRecorder.stop();
+                isRecording = false;
+                isPaused = false;
+
+                // 更新UI
+                recordingState.classList.add('hidden');
+                pausedState.classList.add('hidden');
+                completedState.classList.remove('hidden');
+
+                // 停止计时
+                clearInterval(recordingInterval);
+                updateTimeDisplay(completedTimeEl);
+            }
+        }
+
+        // 重置录音
+        function resetRecording() {
+            // 停止录音（如果正在进行）
+            if (mediaRecorder && (isRecording || isPaused)) {
+                mediaRecorder.stop();
+                isRecording = false;
+                isPaused = false;
+            }
+
+            // 重置变量
+            audioChunks = [];
+            audioBlob = null;
+            audioUrl = null;
+            recordingTime = 0;
+
+            // 清除计时器
+            clearInterval(recordingInterval);
+
+            // 更新UI
+            initialState.classList.remove('hidden');
+            recordingState.classList.add('hidden');
+            pausedState.classList.add('hidden');
+            completedState.classList.add('hidden');
+            analysisPlaceholder.classList.remove('hidden');
+            analysisResults.classList.add('hidden');
+
+            // 释放资源
+            if (audioContext) {
+                audioContext.close().then(() => {
+                    audioContext = null;
+                });
+            }
+        }
+
+        // 播放录音
+        function playRecording() {
+            if (audioUrl) {
+                recordedAudio.play();
+            }
+        }
+
+        // 分析音频
+        function analyzeAudio() {
+            if (!audioBlob) return;
+
+            // 显示分析结果区域
+            analysisPlaceholder.classList.add('hidden');
+            analysisResults.classList.remove('hidden');
+
+            // 创建音频上下文（如果尚未创建）
+            if (!audioContext) {
+                audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            }
+
+            // 加载音频文件
+            const fileReader = new FileReader();
+            fileReader.onload = function(event) {
+                audioContext.decodeAudioData(event.target.result)
+                    .then(audioBuffer => {
+                        // 分析音频数据
+                        analyzeAudioBuffer(audioBuffer);
+                    })
+                    .catch(error => {
+                        console.error('解码音频失败:', error);
+                        alert('分析音频失败，请重试');
+                    });
+            };
+
+            fileReader.readAsArrayBuffer(audioBlob);
+        }
+
+        // 分析音频缓冲区
+        function analyzeAudioBuffer(audioBuffer) {
+            // 获取音频通道数据
+            const channelData = audioBuffer.getChannelData(0);
+
+            // 计算平均响度
+            const rms = calculateRMS(channelData);
+            const loudness = 20 * Math.log10(rms); // dB
+
+            // 计算噪声水平（简化版）
+            const noiseLevel = calculateNoiseLevel(channelData);
+
+            // 计算清晰度（简化版）
+            const clarity = calculateClarity(channelData);
+
+            // 计算整体评分
+            const overallRating = calculateOverallRating(loudness, clarity, noiseLevel);
+
+            // 更新质量指标
+            updateQualityMetrics(loudness, clarity, noiseLevel, overallRating);
+
+            // 生成波形图
+            createWaveformChart(channelData);
+
+            // 生成频谱图
+            createSpectrumChart(audioBuffer);
+
+            // 生成频率响应图
+            createFrequencyChart(audioBuffer);
+
+            // 生成分析建议
+            generateRecommendations(loudness, clarity, noiseLevel);
+        }
+
+        // 计算均方根值(RMS) - 用于衡量响度
+        function calculateRMS(data) {
+            let sum = 0;
+            for (let i = 0; i < data.length; i++) {
+                sum += data[i] * data[i];
+            }
+            return Math.sqrt(sum / data.length);
+        }
+
+        // 计算噪声水平（简化版）
+        function calculateNoiseLevel(data) {
+            // 将音频分成多个片段，计算每个片段的能量
+            const segmentLength = 1024;
+            const segments = Math.floor(data.length / segmentLength);
+            const energies = [];
+
+            for (let i = 0; i < segments; i++) {
+                let sum = 0;
+                for (let j = 0; j < segmentLength; j++) {
+                    sum += data[i * segmentLength + j] * data[i * segmentLength + j];
+                }
+                energies.push(Math.sqrt(sum / segmentLength));
+            }
+
+            // 排序并计算噪声阈值（假设最低20%的能量是噪声）
+            energies.sort((a, b) => a - b);
+            const noiseThresholdIndex = Math.floor(energies.length * 0.2);
+            const noiseThreshold = energies[noiseThresholdIndex];
+
+            // 计算噪声占比
+            const noiseEnergy = energies.slice(0, noiseThresholdIndex).reduce((sum, e) => sum + e, 0);
+            const totalEnergy = energies.reduce((sum, e) => sum + e, 0);
+
+            return Math.min(100, Math.max(0, Math.round((noiseEnergy / totalEnergy) * 100)));
+        }
+
+        // 计算清晰度（简化版）
+        function calculateClarity(data) {
+            // 这个计算方法是简化的，实际应用中应该使用更复杂的算法
+            // 这里我们假设高频能量占比越高，清晰度越高
+            const fftSize = 2048;
+            const frequencyBins = fftSize / 2;
+
+            // 创建一个简单的FFT实现（这里使用简化版）
+            const spectrum = new Array(frequencyBins).fill(0);
+
+            // 由于没有真正实现FFT，我们使用一个简化的频率分析方法
+            // 这里我们只是将音频分成低频和高频两部分
+            const midFrequencyBin = Math.floor(frequencyBins / 4); // 假设低频到中频的分界点
+
+            // 计算低频和高频能量
+            let lowEnergy = 0;
+            let highEnergy = 0;
+
+            // 这里只是一个模拟的频谱分析
+            for (let i = 0; i < data.length; i += 10) {
+                // 简单模拟频率分析
+                const bin = Math.min(frequencyBins - 1, Math.floor(Math.abs(data[i]) * frequencyBins));
+                if (bin < midFrequencyBin) {
+                    lowEnergy += data[i] * data[i];
+                } else {
+                    highEnergy += data[i] * data[i];
+                }
+            }
+
+            // 清晰度定义为高频能量占总能量的比例
+            const totalEnergy = lowEnergy + highEnergy;
+            const clarityPercentage = totalEnergy > 0 ? Math.round((highEnergy / totalEnergy) * 100) : 0;
+
+            // 限制在0-100%之间
+            return Math.min(100, Math.max(0, clarityPercentage));
+        }
+
+        // 计算整体评分
+        function calculateOverallRating(loudness, clarity, noiseLevel) {
+            // 归一化各指标
+            const normalizedLoudness = Math.min(100, Math.max(0, (loudness + 60) / 60 * 100));
+            const normalizedClarity = clarity;
+            const normalizedNoise = 100 - noiseLevel; // 噪声越低越好
+
+            // 计算加权总分（响度占30%，清晰度占40%，噪声占30%）
+            const overallScore = Math.round(
+                (normalizedLoudness * 0.3) +
+                (normalizedClarity * 0.4) +
+                (normalizedNoise * 0.3)
+            );
+
+            // 将总分转换为星级（1-5星）
+            const stars = Math.max(1, Math.min(5, Math.round(overallScore / 20)));
+
+            return { score: overallScore, stars };
+        }
+
+        // 更新质量指标UI
+        function updateQualityMetrics(loudness, clarity, noiseLevel, overallRating) {
+            // 更新响度
+            loudnessValue.textContent = loudness.toFixed(1) + ' dB';
+            const loudnessPercent = Math.min(100, Math.max(0, (loudness + 60) / 60 * 100));
+            loudnessBar.style.width = loudnessPercent + '%';
+
+            // 更新清晰度
+            clarityValue.textContent = clarity + '%';
+            clarityBar.style.width = clarity + '%';
+
+            // 更新噪声水平
+            noiseValue.textContent = noiseLevel + '%';
+            noiseBar.style.width = noiseLevel + '%';
+
+            // 更新整体评分
+            overallScore.textContent = '★'.repeat(overallRating.stars) + '☆'.repeat(5 - overallRating.stars);
+
+            // 应用颜色编码
+            if (loudness > -20) {
+                loudnessValue.classList.add('text-danger');
+            } else if (loudness > -30) {
+                loudnessValue.classList.add('text-accent');
+            } else {
+                loudnessValue.classList.add('text-secondary');
+            }
+
+            if (clarity > 80) {
+                clarityValue.classList.add('text-secondary');
+            } else if (clarity > 60) {
+                clarityValue.classList.add('text-accent');
+            } else {
+                clarityValue.classList.add('text-danger');
+            }
+
+            if (noiseLevel < 20) {
+                noiseValue.classList.add('text-secondary');
+            } else if (noiseLevel < 40) {
+                noiseValue.classList.add('text-accent');
+            } else {
+                noiseValue.classList.add('text-danger');
+            }
+        }
+
+        // 创建波形图
+        function createWaveformChart(channelData) {
+            const canvas = document.getElementById('waveformChart');
+            const ctx = canvas.getContext('2d');
+
+            // 如果图表已存在，销毁它
+            if (waveformChart) {
+                waveformChart.destroy();
+            }
+
+            // 为了性能，我们只取每100个样本中的一个点
+            const step = Math.max(1, Math.floor(channelData.length / 1000));
+            const data = [];
+
+            for (let i = 0; i < channelData.length; i += step) {
+                data.push(channelData[i]);
+            }
+
+            // 创建图表
+            waveformChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: data.map((_, i) => i),
+                    datasets: [{
+                        label: '波形',
+                        data: data,
+                        borderColor: '#3B82F6',
+                        backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                        borderWidth: 1,
+                        pointRadius: 0,
+                        fill: true,
+                        tension: 0.1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        x: {
+                            display: false
+                        },
+                        y: {
+                            display: true,
+                            min: -1,
+                            max: 1,
+                            ticks: {
+                                stepSize: 0.5
+                            }
+                        }
+                    },
+                    plugins: {
+                        legend: {
+                            display: false
+                        }
+                    }
+                }
+            });
+        }
+
+        // 创建频谱图
+        function createSpectrumChart(audioBuffer) {
+            const canvas = document.getElementById('spectrumChart');
+            const ctx = canvas.getContext('2d');
+
+            // 如果图表已存在，销毁它
+            if (spectrumChart) {
+                spectrumChart.destroy();
+            }
+
+            // 创建音频上下文和分析器
+            const tempContext = new (window.AudioContext || window.webkitAudioContext)();
+            const tempSource = tempContext.createBufferSource();
+            tempSource.buffer = audioBuffer;
+
+            const tempAnalyser = tempContext.createAnalyser();
+            tempAnalyser.fftSize = 2048;
+            const bufferLength = tempAnalyser.frequencyBinCount;
+            const dataArray = new Uint8Array(bufferLength);
+
+            tempSource.connect(tempAnalyser);
+            tempSource.start();
+
+            // 获取频谱数据
+            tempAnalyser.getByteFrequencyData(dataArray);
+
+            // 创建图表数据
+            const labels = [];
+            const data = [];
+            const step = Math.floor(bufferLength / 50); // 减少数据点以提高性能
+
+            for (let i = 0; i < bufferLength; i += step) {
+                // 频率计算公式: i * sampleRate / fftSize
+                const frequency = Math.round(i * tempContext.sampleRate / tempAnalyser.fftSize);
+                labels.push(frequency);
+                data.push(dataArray[i]);
+            }
+
+            // 创建图表
+            spectrumChart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: '频谱',
+                        data: data,
+                        backgroundColor: 'rgba(16, 185, 129, 0.7)',
+                        borderColor: 'rgba(16, 185, 129, 1)',
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        x: {
+                            title: {
+                                display: true,
+                                text: '频率 (Hz)'
+                            },
+                            ticks: {
+                                callback: function(value) {
+                                    const frequency = labels[value];
+                                    if (frequency < 1000) {
+                                        return frequency + 'Hz';
+                                    } else {
+                                        return (frequency / 1000) + 'kHz';
+                                    }
+                                },
+                                maxTicksLimit: 10
+                            }
+                        },
+                        y: {
+                            title: {
+                                display: true,
+                                text: '强度'
+                            }
+                        }
+                    },
+                    plugins: {
+                        legend: {
+                            display: false
+                        }
+                    }
+                }
+            });
+
+            // 释放资源
+            tempSource.onended = () => {
+                tempContext.close();
+            };
+        }
+
+        // 创建频率响应图
+        function createFrequencyChart(audioBuffer) {
+            const canvas = document.getElementById('frequencyChart');
+            const ctx = canvas.getContext('2d');
+
+            // 如果图表已存在，销毁它
+            if (frequencyChart) {
+                frequencyChart.destroy();
+            }
+
+            // 创建音频上下文和分析器
+            const tempContext = new (window.AudioContext || window.webkitAudioContext)();
+            const tempSource = tempContext.createBufferSource();
+            tempSource.buffer = audioBuffer;
+
+            const tempAnalyser = tempContext.createAnalyser();
+            tempAnalyser.fftSize = 2048;
+            const bufferLength = tempAnalyser.frequencyBinCount;
+            const dataArray = new Uint8Array(bufferLength);
+
+            tempSource.connect(tempAnalyser);
+            tempSource.start();
+
+            // 获取频谱数据
+            tempAnalyser.getByteFrequencyData(dataArray);
+
+            // 创建图表数据
+            const labels = [];
+            const data = [];
+            const idealResponse = [];
+            const step = Math.floor(bufferLength / 50); // 减少数据点以提高性能
+
+            for (let i = 0; i < bufferLength; i += step) {
+                // 频率计算公式: i * sampleRate / fftSize
+                const frequency = Math.round(i * tempContext.sampleRate / tempAnalyser.fftSize);
+                labels.push(frequency);
+                data.push(dataArray[i]);
+
+                // 理想的频率响应曲线（平坦）
+                idealResponse.push(128); // 中间值
+            }
+
+            // 创建图表
+            frequencyChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [
+                        {
+                            label: '实际响应',
+                            data: data,
+                            borderColor: '#3B82F6',
+                            backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                            borderWidth: 2,
+                            pointRadius: 0,
+                            fill: false,
+                            tension: 0.2
+                        },
+                        {
+                            label: '理想响应',
+                            data: idealResponse,
+                            borderColor: '#9CA3AF',
+                            borderWidth: 1,
+                            borderDash: [5, 5],
+                            pointRadius: 0,
+                            fill: false
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        x: {
+                            title: {
+                                display: true,
+                                text: '频率 (Hz)'
+                            },
+                            ticks: {
+                                callback: function(value) {
+                                    const frequency = labels[value];
+                                    if (frequency < 1000) {
+                                        return frequency + 'Hz';
+                                    } else {
+                                        return (frequency / 1000) + 'kHz';
+                                    }
+                                },
+                                maxTicksLimit: 10
+                            }
+                        },
+                        y: {
+                            title: {
+                                display: true,
+                                text: '强度'
+                            },
+                            min: 0,
+                            max: 255
+                        }
+                    }
+                }
+            });
+
+            // 释放资源
+            tempSource.onended = () => {
+                tempContext.close();
+            };
+        }
+
+        // 生成分析建议
+        function generateRecommendations(loudness, clarity, noiseLevel) {
+            const recommendations = [];
+
+            // 响度建议
+            if (loudness < -40) {
+                recommendations.push('• 录音音量过低，建议提高麦克风增益或靠近麦克风');
+            } else if (loudness > -15) {
+                recommendations.push('• 录音音量过高，可能导致失真，建议降低麦克风增益或远离麦克风');
+            }
+
+            // 清晰度建议
+            if (clarity < 60) {
+                recommendations.push('• 语音清晰度较低，可能是由于发音不清晰或频率不平衡导致的');
+                recommendations.push('• 建议在发音时更加清晰，并确保麦克风能够捕捉到完整的频率范围');
+            }
+
+            // 噪声建议
+            if (noiseLevel > 30) {
+                recommendations.push('• 背景噪声较高，建议在更安静的环境中录音');
+                recommendations.push('• 考虑使用带有噪声抑制功能的麦克风或软件');
+            }
+
+            // 综合建议
+            if (recommendations.length === 0) {
+                analysisRecommendations.innerHTML = '<p class="text-green-600">音频质量良好，无需改进！</p>';
+            } else {
+                analysisRecommendations.innerHTML = `<ul class="list-disc list-inside space-y-2 text-gray-700">${recommendations.join('')}</ul>`;
+            }
+        }
+    });
+</script>
+</body>
+</html>

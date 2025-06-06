@@ -57,6 +57,18 @@
       </div>
 
       <div class="demo-card group">
+        <a href="%BASE_URL%exec/audio.html" class="block h-full">
+          <div class="card-content">
+            <h3 class="text-2xl font-semibold text-white mb-2">音频质量分析</h3>
+            <p class="text-gray-400">音频质量分析工具</p>
+            <div class="mt-4 text-blue-400 group-hover:text-blue-300 transition-colors">
+              开始体验 →
+            </div>
+          </div>
+        </a>
+      </div>
+
+      <div class="demo-card group">
         <a href="%BASE_URL%demo2/index.html" class="block h-full">
           <div class="card-content">
             <h3 class="text-2xl font-semibold text-white mb-2">待实现</h3>
@@ -71,6 +83,10 @@
   </div>
 
   <style>
+    * {
+      box-sizing: border-box;
+    }
+
     .demo-card {
       background: rgba(255, 255, 255, 0.05);
       backdrop-filter: blur(10px);
@@ -80,20 +96,20 @@
       transition: all 0.3s ease;
       height: 100%;
     }
-    
+
     .demo-card:hover {
       transform: translateY(-5px);
       box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
       border-color: rgba(255, 255, 255, 0.2);
     }
-    
+
     .card-content {
       height: 100%;
       display: flex;
       flex-direction: column;
     }
   </style>
-  
+
   <script type="module" src="./index.mjs"></script>
 </body>
 </html>
