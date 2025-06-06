@@ -28,4 +28,12 @@ export default defineConfig({
       },
     }),
   ],
+  theme: {
+    colors: {
+      primary: '#3B82F6',
+      secondary: '#10B981',
+      accent: '#8B5CF6',
+      neutral: '#64748B',
+    },
+  }
 })

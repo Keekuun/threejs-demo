@@ -5,27 +5,32 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>音频质量分析工具</title>
   <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
-  <script src="https://cdn.tailwindcss.com"></script>
+<!--  <script src="https://cdn.tailwindcss.com"></script>-->
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.8/dist/chart.umd.min.js"></script>
-  <script>
-      tailwind.config = {
-          theme: {
-              extend: {
-                  colors: {
-                      primary: '#3B82F6',
-                      secondary: '#10B981',
-                      accent: '#F59E0B',
-                      danger: '#EF4444',
-                      dark: '#1E293B',
-                      light: '#F8FAFC'
-                  },
-                  fontFamily: {
-                      inter: ['Inter', 'sans-serif'],
-                  },
-              },
-          }
-      }
+  <!--使用 es module 的方式引入其他脚本-->
+  <script type="module">
+    import '@unocss/reset/tailwind.css'
+    import 'uno.css'
   </script>
+<!--  <script>-->
+<!--      tailwind.config = {-->
+<!--          theme: {-->
+<!--              extend: {-->
+<!--                  colors: {-->
+<!--                      primary: '#3B82F6',-->
+<!--                      secondary: '#10B981',-->
+<!--                      accent: '#F59E0B',-->
+<!--                      danger: '#EF4444',-->
+<!--                      dark: '#1E293B',-->
+<!--                      light: '#F8FAFC'-->
+<!--                  },-->
+<!--                  fontFamily: {-->
+<!--                      inter: ['Inter', 'sans-serif'],-->
+<!--                  },-->
+<!--              },-->
+<!--          }-->
+<!--      }-->
+<!--  </script>-->
   <style>
       @layer utilities {
           .content-auto {
@@ -70,7 +75,7 @@
       <h1 class="text-xl font-bold text-dark">音频质量分析工具</h1>
     </div>
     <div class="flex items-center space-x-4">
-      <button id="helpBtn" class="text-gray-600 hover:text-primary transition-colors duration-200">
+      <button id="helpBtn" class="text-gray-600 hover:text-primary transition-colors duration-200 border px-1 rounded">
         <i class="fa fa-question-circle"></i>
         <span class="hidden md:inline ml-1">帮助</span>
       </button>
@@ -101,7 +106,7 @@
           </div>
 
           <!-- 录音中状态 -->
-          <div id="recordingState" class="text-center hidden">
+          <div id="recordingState" class="text-center !hidden">
             <div class="audio-wave mb-4">
               <span></span><span></span><span></span><span></span><span></span>
               <span></span><span></span><span></span><span></span><span></span>
@@ -118,7 +123,7 @@
           </div>
 
           <!-- 已暂停状态 -->
-          <div id="pausedState" class="text-center hidden">
+          <div id="pausedState" class="text-center !hidden">
             <div class="w-24 h-24 bg-gray-200 rounded-full flex items-center justify-center mb-4 mx-auto">
               <i class="fa fa-pause text-gray-500 text-4xl"></i>
             </div>
@@ -134,7 +139,7 @@
           </div>
 
           <!-- 已完成状态 -->
-          <div id="completedState" class="text-center hidden">
+          <div id="completedState" class="text-center !hidden">
             <div class="w-24 h-24 bg-secondary/10 rounded-full flex items-center justify-center mb-4 mx-auto">
               <i class="fa fa-check text-secondary text-4xl"></i>
             </div>
@@ -170,7 +175,7 @@
           <p class="text-gray-400 text-sm">录制音频并点击"分析音频"按钮开始分析</p>
         </div>
 
-        <div id="analysisResults" class="hidden flex-grow">
+        <div id="analysisResults" class="!hidden flex-grow">
           <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
             <!-- 音频波形图 -->
             <div class="bg-gray-50 rounded-lg p-4">
@@ -202,7 +207,7 @@
                   <p class="text-sm text-gray-500 mb-1">平均响度</p>
                   <div class="flex items-end justify-between">
                     <p id="loudnessValue" class="text-xl font-semibold">-∞ dB</p>
-                    <div class="w-16 h-2 bg-gray-200 rounded-full overflow-hidden">
+                    <div class="w-16 h-2 bg-gray-200 rounded-full overflow-!hidden">
                       <div id="loudnessBar" class="h-full bg-primary rounded-full" style="width: 0%"></div>
                     </div>
                   </div>
@@ -212,7 +217,7 @@
                   <p class="text-sm text-gray-500 mb-1">清晰度</p>
                   <div class="flex items-end justify-between">
                     <p id="clarityValue" class="text-xl font-semibold">--</p>
-                    <div class="w-16 h-2 bg-gray-200 rounded-full overflow-hidden">
+                    <div class="w-16 h-2 bg-gray-200 rounded-full overflow-!hidden">
                       <div id="clarityBar" class="h-full bg-secondary rounded-full" style="width: 0%"></div>
                     </div>
                   </div>
@@ -222,7 +227,7 @@
                   <p class="text-sm text-gray-500 mb-1">噪声水平</p>
                   <div class="flex items-end justify-between">
                     <p id="noiseValue" class="text-xl font-semibold">--</p>
-                    <div class="w-16 h-2 bg-gray-200 rounded-full overflow-hidden">
+                    <div class="w-16 h-2 bg-gray-200 rounded-full overflow-!hidden">
                       <div id="noiseBar" class="h-full bg-danger rounded-full" style="width: 0%"></div>
                     </div>
                   </div>
@@ -271,7 +276,7 @@
 </main>
 
 <!-- 帮助模态框 -->
-<div id="helpModal" class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 hidden">
+<div id="helpModal" class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 !hidden">
   <div class="bg-white rounded-xl shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
     <div class="p-6 border-b">
       <div class="flex justify-between items-center">
@@ -412,18 +417,18 @@
 
         // 帮助模态框事件
         helpBtn.addEventListener('click', () => {
-            helpModal.classList.remove('hidden');
+            helpModal.classList.remove('!hidden');
         });
 
         [closeHelpBtn, closeHelpBtn2].forEach(btn => {
             btn.addEventListener('click', () => {
-                helpModal.classList.add('hidden');
+                helpModal.classList.add('!hidden');
             });
         });
 
         helpModal.addEventListener('click', (e) => {
             if (e.target === helpModal) {
-                helpModal.classList.add('hidden');
+                helpModal.classList.add('!hidden');
             }
         });
 
@@ -485,10 +490,10 @@
                     isPaused = false;
 
                     // 更新UI
-                    initialState.classList.add('hidden');
-                    recordingState.classList.remove('hidden');
-                    pausedState.classList.add('hidden');
-                    completedState.classList.add('hidden');
+                    initialState.classList.add('!hidden');
+                    recordingState.classList.remove('!hidden');
+                    pausedState.classList.add('!hidden');
+                    completedState.classList.add('!hidden');
 
                     // 开始计时
                     recordingInterval = setInterval(() => {
@@ -547,10 +552,10 @@
                     isPaused = false;
 
                     // 更新UI
-                    initialState.classList.add("hidden");
-                    recordingState.classList.remove("hidden");
-                    pausedState.classList.add("hidden");
-                    completedState.classList.add("hidden");
+                    initialState.classList.add("!hidden");
+                    recordingState.classList.remove("!hidden");
+                    pausedState.classList.add("!hidden");
+                    completedState.classList.add("!hidden");
 
                     // 开始计时
                     recordingInterval = setInterval(() => {
@@ -587,8 +592,8 @@
                 isPaused = true;
 
                 // 更新UI
-                recordingState.classList.add('hidden');
-                pausedState.classList.remove('hidden');
+                recordingState.classList.add('!hidden');
+                pausedState.classList.remove('!hidden');
 
                 // 停止计时
                 clearInterval(recordingInterval);
@@ -603,8 +608,8 @@
                 isPaused = false;
 
                 // 更新UI
-                recordingState.classList.remove('hidden');
-                pausedState.classList.add('hidden');
+                recordingState.classList.remove('!hidden');
+                pausedState.classList.add('!hidden');
 
                 // 恢复计时
                 recordingInterval = setInterval(() => {
@@ -622,9 +627,9 @@
                 isPaused = false;
 
                 // 更新UI
-                recordingState.classList.add('hidden');
-                pausedState.classList.add('hidden');
-                completedState.classList.remove('hidden');
+                recordingState.classList.add('!hidden');
+                pausedState.classList.add('!hidden');
+                completedState.classList.remove('!hidden');
 
                 // 停止计时
                 clearInterval(recordingInterval);
@@ -651,12 +656,12 @@
             clearInterval(recordingInterval);
 
             // 更新UI
-            initialState.classList.remove('hidden');
-            recordingState.classList.add('hidden');
-            pausedState.classList.add('hidden');
-            completedState.classList.add('hidden');
-            analysisPlaceholder.classList.remove('hidden');
-            analysisResults.classList.add('hidden');
+            initialState.classList.remove('!hidden');
+            recordingState.classList.add('!hidden');
+            pausedState.classList.add('!hidden');
+            completedState.classList.add('!hidden');
+            analysisPlaceholder.classList.remove('!hidden');
+            analysisResults.classList.add('!hidden');
 
             // 释放资源
             if (audioContext) {
@@ -678,8 +683,8 @@
             if (!audioBlob) return;
 
             // 显示分析结果区域
-            analysisPlaceholder.classList.add('hidden');
-            analysisResults.classList.remove('hidden');
+            analysisPlaceholder.classList.add('!hidden');
+            analysisResults.classList.remove('!hidden');
 
             // 创建音频上下文（如果尚未创建）
             if (!audioContext) {
