@@ -5,35 +5,95 @@
   <meta name="viewport"
         content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
   <meta http-equiv="X-UA-Compatible" content="ie=edge">
-  <title>hello threejs!</title>
+  <title>Three.js Playground</title>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
 </head>
-<body class="bg-gray-200">
+<body class="bg-gradient-to-br from-gray-900 to-gray-800 min-h-screen">
+  <div class="container mx-auto px-4 py-12">
+    <header class="text-center mb-16">
+      <h1 class="text-5xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-purple-600 mb-4">
+        Three.js Playground
+      </h1>
+      <p class="text-xl text-gray-300 max-w-2xl mx-auto">
+        探索3D网页图形的无限可能
+      </p>
+    </header>
 
-<h2>mode:%MODE%</h2>
-<h3>base:%BASE_URL%</h3>
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
+      <div class="demo-card group">
+        <a href="%BASE_URL%canvas/index.html" class="block h-full">
+          <div class="card-content">
+            <h3 class="text-2xl font-semibold text-white mb-2">Canvas 基础</h3>
+            <p class="text-gray-400">平移、缩放等基础操作</p>
+            <div class="mt-4 text-blue-400 group-hover:text-blue-300 transition-colors">
+              开始体验 →
+            </div>
+          </div>
+        </a>
+      </div>
 
-<h1 class="font-bold text-3xl color-black flex justify-center">hello threejs!</h1>
-<section class="flex justify-center gap-10">
-  <a href="%BASE_URL%canvas/index.html"
-     class="flex-1 block max-w-sm p-6 bg-white border border-gray-200 rounded-lg shadow hover:bg-gray-100 dark:bg-gray-800 dark:border-gray-700 dark:hover:bg-gray-700">
-    <h5 class="mb-2 text-2xl font-bold tracking-tight text-gray-900 dark:text-white">canvas demo1</h5>
-    <p class="font-normal text-gray-700 dark:text-gray-400">canvas平移、缩放</p>
-  </a>
+      <div class="demo-card group">
+        <a href="%BASE_URL%demo1/index.html" class="block h-full">
+          <div class="card-content">
+            <h3 class="text-2xl font-semibold text-white mb-2">3D 立方体</h3>
+            <p class="text-gray-400">自旋的小方块</p>
+            <div class="mt-4 text-blue-400 group-hover:text-blue-300 transition-colors">
+              开始体验 →
+            </div>
+          </div>
+        </a>
+      </div>
 
-  <a href="%BASE_URL%demo1/index.html"
-     class="flex-1 block max-w-sm p-6 bg-white border border-gray-200 rounded-lg shadow hover:bg-gray-100 dark:bg-gray-800 dark:border-gray-700 dark:hover:bg-gray-700">
-    <h5 class="mb-2 text-2xl font-bold tracking-tight text-gray-900 dark:text-white">threejs demo1</h5>
-    <p class="font-normal text-gray-700 dark:text-gray-400">自旋的小方块</p>
-  </a>
+      <div class="demo-card group">
+        <a href="%BASE_URL%canvas/drag.html" class="block h-full">
+          <div class="card-content">
+            <h3 class="text-2xl font-semibold text-white mb-2">元素连接线</h3>
+            <p class="text-gray-400">贝塞尔曲线连接演示</p>
+            <div class="mt-4 text-blue-400 group-hover:text-blue-300 transition-colors">
+              开始体验 →
+            </div>
+          </div>
+        </a>
+      </div>
 
-  <a href="%BASE_URL%demo2/index.html"
-     class="flex-1  block max-w-sm p-6 bg-white border border-gray-200 rounded-lg shadow hover:bg-gray-100 dark:bg-gray-800 dark:border-gray-700 dark:hover:bg-gray-700">
-    <h5 class="mb-2 text-2xl font-bold tracking-tight text-gray-900 dark:text-white">threejs demo2</h5>
-    <p class="font-normal text-gray-700 dark:text-gray-400">待实现</p>
-  </a>
-</section>
+      <div class="demo-card group">
+        <a href="%BASE_URL%demo2/index.html" class="block h-full">
+          <div class="card-content">
+            <h3 class="text-2xl font-semibold text-white mb-2">待实现</h3>
+            <p class="text-gray-400">更多精彩即将呈现</p>
+            <div class="mt-4 text-blue-400 group-hover:text-blue-300 transition-colors">
+              敬请期待 →
+            </div>
+          </div>
+        </a>
+      </div>
+    </div>
+  </div>
 
+  <style>
+    .demo-card {
+      background: rgba(255, 255, 255, 0.05);
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 16px;
+      padding: 24px;
+      transition: all 0.3s ease;
+      height: 100%;
+    }
+    
+    .demo-card:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
+      border-color: rgba(255, 255, 255, 0.2);
+    }
+    
+    .card-content {
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+    }
+  </style>
+  
+  <script type="module" src="./index.mjs"></script>
 </body>
-
-<script type="module" src="./index.mjs"></script>
 </html>

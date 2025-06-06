@@ -1,0 +1,510 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>元素连接线演示</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
+  <script>
+      tailwind.config = {
+          theme: {
+              extend: {
+                  colors: {
+                      primary: '#3B82F6',
+                      secondary: '#10B981',
+                      accent: '#8B5CF6',
+                      neutral: '#64748B',
+                  },
+                  fontFamily: {
+                      sans: ['Inter', 'system-ui', 'sans-serif'],
+                  },
+              }
+          }
+      }
+  </script>
+  <style type="text/tailwindcss">
+      @layer utilities {
+          .content-auto {
+              content-visibility: auto;
+          }
+          .element-shadow {
+              box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+          }
+          .canvas-container {
+              position: relative;
+              overflow: hidden;
+          }
+          .bezier-handle {
+              cursor: move;
+              transition: all 0.2s ease;
+          }
+          .bezier-handle:hover {
+              transform: scale(1.2);
+          }
+      }
+  </style>
+</head>
+<body class="bg-gray-50 min-h-screen font-sans">
+<div class="container mx-auto px-4 py-8 max-w-5xl">
+  <header class="mb-8 text-center">
+    <h1 class="text-[clamp(1.75rem,4vw,2.5rem)] font-bold text-gray-800 mb-2">元素连接线演示</h1>
+    <p class="text-gray-600 max-w-2xl mx-auto">
+      此示例展示了如何在元素之间绘制连接线，包括基础连接线、贝塞尔曲线连接线和可交互的贝塞尔曲线演示。
+    </p>
+  </header>
+
+  <div class="bg-white rounded-xl shadow-lg p-4 md:p-6 mb-8">
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <!-- 固定元素连接线示例 -->
+      <div>
+        <h2 class="text-xl font-semibold text-gray-800 mb-4 flex items-center">
+          <i class="fa fa-link text-primary mr-2"></i> 固定元素连接线
+        </h2>
+        <div class="canvas-container w-full h-[300px] border-2 border-gray-200 rounded-lg relative" id="fixedElementsContainer">
+          <canvas id="fixedConnectionCanvas" class="absolute top-0 left-0 w-full h-full pointer-events-none z-10"></canvas>
+
+          <!-- 固定位置的两个元素 -->
+          <div class="fixed-element absolute w-16 h-16 bg-primary rounded-lg flex items-center justify-center text-white element-shadow"
+               data-id="fixed1" style="top: 60px; left: 80px; z-index: 20;">
+            <i class="fa fa-circle text-xl"></i>
+          </div>
+
+          <div class="fixed-element absolute w-16 h-16 bg-secondary rounded-lg flex items-center justify-center text-white element-shadow"
+               data-id="fixed2" style="top: 180px; left: 300px; z-index: 20;">
+            <i class="fa fa-square text-xl"></i>
+          </div>
+        </div>
+      </div>
+
+      <!-- 可拖拽元素连接线示例 -->
+      <div>
+        <h2 class="text-xl font-semibold text-gray-800 mb-4 flex items-center">
+          <i class="fa fa-arrows text-primary mr-2"></i> 可拖拽元素连接线
+        </h2>
+        <div class="canvas-container w-full h-[300px] border-2 border-gray-200 rounded-lg relative" id="canvasContainer">
+          <canvas id="connectionCanvas" class="absolute top-0 left-0 w-full h-full pointer-events-none z-10"></canvas>
+
+          <!-- 可拖拽元素 -->
+          <div class="draggable-element absolute w-16 h-16 bg-primary rounded-lg flex items-center justify-center text-white cursor-move element-shadow"
+               data-id="element1" style="top: 60px; left: 80px; z-index: 20;">
+            <i class="fa fa-code text-xl"></i>
+          </div>
+
+          <div class="draggable-element absolute w-16 h-16 bg-secondary rounded-lg flex items-center justify-center text-white cursor-move element-shadow"
+               data-id="element2" style="top: 180px; left: 300px; z-index: 20;">
+            <i class="fa fa-database text-xl"></i>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 贝塞尔曲线演示 -->
+  <div class="bg-white rounded-xl shadow-lg p-4 md:p-6 mb-8">
+    <h2 class="text-xl font-semibold text-gray-800 mb-4 flex items-center">
+      <i class="fa fa-curve text-primary mr-2"></i> 贝塞尔曲线演示
+    </h2>
+    <div class="canvas-container w-full h-[300px] border-2 border-gray-200 rounded-lg relative" id="bezierDemoContainer">
+      <canvas id="bezierCanvas" class="absolute top-0 left-0 w-full h-full z-10"></canvas>
+
+      <!-- 贝塞尔曲线控制点 -->
+      <div class="bezier-handle absolute w-6 h-6 bg-accent rounded-full flex items-center justify-center text-white element-shadow cursor-move"
+           data-type="start" style="top: 80px; left: 100px; z-index: 20;"></div>
+
+      <div class="bezier-handle absolute w-6 h-6 bg-red-500 rounded-full flex items-center justify-center text-white element-shadow cursor-move"
+           data-type="control1" style="top: 50px; left: 220px; z-index: 20;"></div>
+
+      <div class="bezier-handle absolute w-6 h-6 bg-red-500 rounded-full flex items-center justify-center text-white element-shadow cursor-move"
+           data-type="control2" style="top: 180px; left: 280px; z-index: 20;"></div>
+
+      <div class="bezier-handle absolute w-6 h-6 bg-accent rounded-full flex items-center justify-center text-white element-shadow cursor-move"
+           data-type="end" style="top: 150px; left: 400px; z-index: 20;"></div>
+    </div>
+    <div class="mt-4 text-sm text-gray-600">
+      <p class="flex items-center"><i class="fa fa-info-circle text-primary mr-2"></i>
+        <span>拖动红色控制点调整曲线形状，拖动蓝色端点改变曲线位置</span>
+      </p>
+    </div>
+  </div>
+
+  <div class="bg-white rounded-xl shadow-lg p-4 md:p-6 mb-8">
+    <h2 class="text-xl font-semibold text-gray-800 mb-4 flex items-center">
+      <i class="fa fa-info-circle text-primary mr-2"></i> 功能说明
+    </h2>
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <div class="bg-gray-50 p-4 rounded-lg">
+        <h3 class="font-semibold text-gray-800 mb-2">固定元素连接线</h3>
+        <ul class="text-gray-600 space-y-1 text-sm">
+          <li class="flex items-start">
+            <i class="fa fa-check text-green-500 mt-1 mr-2"></i>
+            <span>展示两个固定位置元素之间的连接线</span>
+          </li>
+          <li class="flex items-start">
+            <i class="fa fa-check text-green-500 mt-1 mr-2"></i>
+            <span>基于贝塞尔曲线算法，自动计算控制点</span>
+          </li>
+        </ul>
+      </div>
+
+      <div class="bg-gray-50 p-4 rounded-lg">
+        <h3 class="font-semibold text-gray-800 mb-2">可拖拽元素连接线</h3>
+        <ul class="text-gray-600 space-y-1 text-sm">
+          <li class="flex items-start">
+            <i class="fa fa-check text-green-500 mt-1 mr-2"></i>
+            <span>元素可以自由拖拽，连接线实时更新</span>
+          </li>
+          <li class="flex items-start">
+            <i class="fa fa-check text-green-500 mt-1 mr-2"></i>
+            <span>使用贝塞尔曲线，确保连接线平滑自然</span>
+          </li>
+        </ul>
+      </div>
+
+      <div class="bg-gray-50 p-4 rounded-lg">
+        <h3 class="font-semibold text-gray-800 mb-2">贝塞尔曲线演示</h3>
+        <ul class="text-gray-600 space-y-1 text-sm">
+          <li class="flex items-start">
+            <i class="fa fa-check text-green-500 mt-1 mr-2"></i>
+            <span>直观展示贝塞尔曲线的工作原理</span>
+          </li>
+          <li class="flex items-start">
+            <i class="fa fa-check text-green-500 mt-1 mr-2"></i>
+            <span>通过控制点调整曲线形状和张力</span>
+          </li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // 初始化固定元素连接线
+        initFixedElementConnection();
+
+        // 初始化可拖拽元素连接线
+        initDraggableElementConnection();
+
+        // 初始化贝塞尔曲线演示
+        initBezierDemo();
+    });
+
+    // 固定元素连接线功能
+    function initFixedElementConnection() {
+        const canvas = document.getElementById('fixedConnectionCanvas');
+        const ctx = canvas.getContext('2d');
+        const container = document.getElementById('fixedElementsContainer');
+
+        const connections = [
+            { from: 'fixed1', to: 'fixed2', color: '#3B82F6', thickness: 2 },
+        ];
+
+        // 设置Canvas尺寸以匹配容器
+        function resizeCanvas() {
+            canvas.width = container.clientWidth;
+            canvas.height = container.clientHeight;
+            drawConnections();
+        }
+
+        // 初始化和监听窗口大小变化
+        resizeCanvas();
+        window.addEventListener('resize', resizeCanvas);
+
+        // 绘制所有连接线
+        function drawConnections() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            connections.forEach(connection => {
+                const fromElement = document.querySelector(`[data-id="${connection.from}"]`);
+                const toElement = document.querySelector(`[data-id="${connection.to}"]`);
+
+                if (fromElement && toElement) {
+                    drawConnection(fromElement, toElement, connection.color, connection.thickness);
+                }
+            });
+        }
+
+        // 绘制连接线
+        function drawConnection(fromElement, toElement, color, thickness) {
+            const fromRect = fromElement.getBoundingClientRect();
+            const toRect = toElement.getBoundingClientRect();
+            const containerRect = container.getBoundingClientRect();
+
+            const fromX = fromRect.left + fromRect.width / 2 - containerRect.left;
+            const fromY = fromRect.top + fromRect.height / 2 - containerRect.top;
+            const toX = toRect.left + toRect.width / 2 - containerRect.left;
+            const toY = toRect.top + toRect.height / 2 - containerRect.top;
+
+            ctx.strokeStyle = color;
+            ctx.lineWidth = thickness;
+            ctx.beginPath();
+            ctx.moveTo(fromX, fromY);
+            ctx.lineTo(toX, toY);
+            ctx.stroke();
+        }
+
+        // 初始绘制连接线
+        drawConnections();
+    }
+
+    // 可拖拽元素连接线功能
+    function initDraggableElementConnection() {
+        const canvas = document.getElementById('connectionCanvas');
+        const ctx = canvas.getContext('2d');
+        const container = document.getElementById('canvasContainer');
+
+        const connections = [
+            { from: 'element1', to: 'element2', color: '#3B82F6', thickness: 2 },
+        ];
+
+        // 设置Canvas尺寸以匹配容器
+        function resizeCanvas() {
+            canvas.width = container.clientWidth;
+            canvas.height = container.clientHeight;
+            drawConnections();
+        }
+
+        // 初始化和监听窗口大小变化
+        resizeCanvas();
+        window.addEventListener('resize', resizeCanvas);
+
+        // 绘制所有连接线
+        function drawConnections() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            connections.forEach(connection => {
+                const fromElement = document.querySelector(`[data-id="${connection.from}"]`);
+                const toElement = document.querySelector(`[data-id="${connection.to}"]`);
+
+                if (fromElement && toElement) {
+                    drawConnection(fromElement, toElement, connection.color, connection.thickness);
+                }
+            });
+        }
+
+        // 绘制连接线
+        function drawConnection(fromElement, toElement, color, thickness) {
+            const fromRect = fromElement.getBoundingClientRect();
+            const toRect = toElement.getBoundingClientRect();
+            const containerRect = container.getBoundingClientRect();
+
+            const fromX = fromRect.left + fromRect.width / 2 - containerRect.left;
+            const fromY = fromRect.top + fromRect.height / 2 - containerRect.top;
+            const toX = toRect.left + toRect.width / 2 - containerRect.left;
+            const toY = toRect.top + toRect.height / 2 - containerRect.top;
+
+            ctx.strokeStyle = color;
+            ctx.lineWidth = thickness;
+            ctx.beginPath();
+            ctx.moveTo(fromX, fromY);
+            ctx.lineTo(toX, toY);
+            ctx.stroke();
+        }
+
+        // 拖拽相关逻辑
+        const draggableElements = document.querySelectorAll('.draggable-element');
+        let isDragging = false;
+        let currentElement = null;
+        let offsetX, offsetY;
+
+        draggableElements.forEach(element => {
+            element.addEventListener('mousedown', function(e) {
+                isDragging = true;
+                currentElement = this;
+
+                const rect = this.getBoundingClientRect();
+                const containerRect = container.getBoundingClientRect();
+
+                offsetX = e.clientX - rect.left;
+                offsetY = e.clientY - rect.top;
+
+                document.addEventListener('mousemove', drag);
+                document.addEventListener('mouseup', stopDrag);
+            });
+        });
+
+        function drag(e) {
+            if (!isDragging) return;
+
+            const containerRect = container.getBoundingClientRect();
+            let newX = e.clientX - containerRect.left - offsetX;
+            let newY = e.clientY - containerRect.top - offsetY;
+
+            newX = Math.max(0, Math.min(container.clientWidth - currentElement.offsetWidth, newX));
+            newY = Math.max(0, Math.min(container.clientHeight - currentElement.offsetHeight, newY));
+
+            currentElement.style.left = `${newX}px`;
+            currentElement.style.top = `${newY}px`;
+
+            drawConnections();
+        }
+
+        function stopDrag() {
+            isDragging = false;
+            document.removeEventListener('mousemove', drag);
+            document.removeEventListener('mouseup', stopDrag);
+        }
+
+        // 初始绘制连接线
+        drawConnections();
+    }
+
+    // 贝塞尔曲线演示功能
+    function initBezierDemo() {
+        const canvas = document.getElementById('bezierCanvas');
+        const ctx = canvas.getContext('2d');
+        const container = document.getElementById('bezierDemoContainer');
+
+        // 贝塞尔曲线控制点
+        const points = {
+            start: { x: 100, y: 80, element: document.querySelector('[data-type="start"]') },
+            control1: { x: 220, y: 50, element: document.querySelector('[data-type="control1"]') },
+            control2: { x: 280, y: 180, element: document.querySelector('[data-type="control2"]') },
+            end: { x: 400, y: 150, element: document.querySelector('[data-type="end"]') }
+        };
+
+        // 设置Canvas尺寸以匹配容器
+        function resizeCanvas() {
+            canvas.width = container.clientWidth;
+            canvas.height = container.clientHeight;
+            drawBezierCurve();
+        }
+
+        // 初始化和监听窗口大小变化
+        resizeCanvas();
+        window.addEventListener('resize', resizeCanvas);
+
+        // 更新控制点位置
+        function updatePointPosition(type, x, y) {
+            const point = points[type];
+            if (point) {
+                // 更新点的坐标
+                point.x = x;
+                point.y = y;
+
+                // 更新DOM元素位置
+                point.element.style.left = `${x - 3}px`; // 减去元素宽度的一半
+                point.element.style.top = `${y - 3}px`;  // 减去元素高度的一半
+
+                // 重绘贝塞尔曲线
+                drawBezierCurve();
+            }
+        }
+
+        // 绘制贝塞尔曲线
+        function drawBezierCurve() {
+            // 清除Canvas
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            // 绘制控制线（辅助线）
+            ctx.beginPath();
+            ctx.moveTo(points.start.x, points.start.y);
+            ctx.lineTo(points.control1.x, points.control1.y);
+            ctx.moveTo(points.control2.x, points.control2.y);
+            ctx.lineTo(points.end.x, points.end.y);
+            ctx.strokeStyle = '#94A3B8';
+            ctx.lineWidth = 1;
+            ctx.setLineDash([5, 5]);
+            ctx.stroke();
+            ctx.setLineDash([]);
+
+            // 绘制贝塞尔曲线
+            ctx.beginPath();
+            ctx.moveTo(points.start.x, points.start.y);
+            ctx.bezierCurveTo(
+                points.control1.x, points.control1.y,
+                points.control2.x, points.control2.y,
+                points.end.x, points.end.y
+            );
+            ctx.strokeStyle = '#3B82F6';
+            ctx.lineWidth = 3;
+            ctx.stroke();
+
+            // 绘制端点和控制点
+            drawPoint(points.start.x, points.start.y, '#3B82F6');
+            drawPoint(points.control1.x, points.control1.y, '#EF4444');
+            drawPoint(points.control2.x, points.control2.y, '#EF4444');
+            drawPoint(points.end.x, points.end.y, '#3B82F6');
+        }
+
+        // 绘制点
+        function drawPoint(x, y, color) {
+            ctx.beginPath();
+            ctx.arc(x, y, 6, 0, 2 * Math.PI);
+            ctx.fillStyle = color;
+            ctx.fill();
+            ctx.strokeStyle = '#FFFFFF';
+            ctx.lineWidth = 1;
+            ctx.stroke();
+        }
+
+        // 拖拽控制点
+        let isDraggingPoint = false;
+        let draggingType = null;
+
+        // 为所有控制点添加拖拽事件
+        Object.keys(points).forEach(type => {
+            const point = points[type];
+
+            point.element.addEventListener('mousedown', function(e) {
+                e.preventDefault();
+                isDraggingPoint = true;
+                draggingType = type;
+
+                // 提高拖拽元素的层级
+                this.style.zIndex = 30;
+
+                // 添加拖拽样式
+                this.classList.add('scale-110');
+
+                // 监听拖拽和释放事件
+                document.addEventListener('mousemove', dragPoint);
+                document.addEventListener('mouseup', stopDragPoint);
+            });
+        });
+
+        // 拖拽控制点过程
+        function dragPoint(e) {
+            if (!isDraggingPoint) return;
+
+            // 计算新位置（相对于容器）
+            const containerRect = container.getBoundingClientRect();
+            let newX = e.clientX - containerRect.left;
+            let newY = e.clientY - containerRect.top;
+
+            // 限制在容器内
+            newX = Math.max(10, Math.min(container.clientWidth - 10, newX));
+            newY = Math.max(10, Math.min(container.clientHeight - 10, newY));
+
+            // 更新控制点位置
+            updatePointPosition(draggingType, newX, newY);
+
+            // 阻止默认行为
+            e.preventDefault();
+        }
+
+        // 停止拖拽控制点
+        function stopDragPoint() {
+            if (!isDraggingPoint) return;
+
+            isDraggingPoint = false;
+
+            // 恢复元素层级
+            points[draggingType].element.style.zIndex = 20;
+
+            // 移除拖拽样式
+            points[draggingType].element.classList.remove('scale-110');
+
+            // 移除事件监听
+            document.removeEventListener('mousemove', dragPoint);
+            document.removeEventListener('mouseup', stopDragPoint);
+        }
+
+        // 初始绘制贝塞尔曲线
+        setTimeout(drawBezierCurve, 100);
+    }
+</script>
+</body>
+</html>
