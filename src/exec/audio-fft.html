@@ -1,0 +1,467 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>音频频谱可视化</title>
+  <style>
+    body {
+      background-color: #111;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      margin: 0;
+      font-family: sans-serif;
+      color: white;
+    }
+    canvas {
+      border: 1px solid #333;
+      background-color: #000;
+      margin-bottom: 20px;
+    }
+    .control-panel {
+      display: flex;
+      flex-direction: column;
+      gap: 15px;
+      margin-bottom: 20px;
+      width: 500px;
+    }
+    .tab-buttons {
+      display: flex;
+      gap: 10px;
+    }
+    button {
+      padding: 10px 20px;
+      font-size: 16px;
+      cursor: pointer;
+      background-color: #4CAF50;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      flex: 1;
+    }
+    button:disabled {
+      background-color: #666;
+      cursor: not-allowed;
+    }
+    .tab-content {
+      display: none;
+    }
+    .tab-content.active {
+      display: block;
+    }
+    #remoteAudio {
+      width: 100%;
+    }
+    #localFileInfo {
+      margin-top: 10px;
+      font-size: 14px;
+    }
+    #recordingStatus {
+      margin-top: 10px;
+      font-size: 14px;
+    }
+
+    /* 本地文件上传区域专用样式 */
+    .localTab-wrap {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 15px;
+    }
+    .file-upload-wrapper {
+      position: relative;
+      width: 100%;
+      margin-bottom: 10px;
+    }
+    .file-upload-label {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      width: 100%;
+      height: 120px;
+      border: 2px dashed #4CAF50;
+      border-radius: 8px;
+      background-color: rgba(76, 175, 80, 0.1);
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+    .file-upload-label:hover {
+      background-color: rgba(76, 175, 80, 0.2);
+      border-color: #3e8e41;
+    }
+    .file-upload-label i {
+      font-size: 32px;
+      color: #4CAF50;
+      margin-bottom: 10px;
+    }
+    .file-upload-label span {
+      color: #4CAF50;
+      font-size: 16px;
+    }
+    .file-upload-label small {
+      color: #888;
+      font-size: 12px;
+      margin-top: 5px;
+    }
+    #localFileInput {
+      position: absolute;
+      left: 0;
+      top: 0;
+      opacity: 0;
+      width: 100%;
+      height: 100%;
+      cursor: pointer;
+    }
+    #localFileInfo {
+      width: 100%;
+      padding: 10px;
+      background-color: rgba(255, 255, 255, 0.05);
+      border-radius: 4px;
+      text-align: center;
+      font-size: 14px;
+      color: #ddd;
+      min-height: 20px;
+      word-break: break-all;
+    }
+    #localStartBtn {
+      width: 100%;
+      background: linear-gradient(to right, #4CAF50, #2E8B57);
+      border: none;
+      padding: 12px;
+      font-size: 16px;
+      border-radius: 6px;
+      transition: all 0.3s ease;
+      box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+    }
+    #localStartBtn:hover {
+      background: linear-gradient(to right, #3e8e41, #2E7D32);
+      transform: translateY(-2px);
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+    }
+    #localStartBtn:active {
+      transform: translateY(0);
+    }
+    /* 添加图标字体 (可以使用Font Awesome或其他) */
+    @font-face {
+      font-family: 'Material Icons';
+      font-style: normal;
+      font-weight: 400;
+      src: url(https://fonts.gstatic.com/s/materialicons/v140/flUhRq6tzZclQEJ-Vdg-IuiaDsNc.woff2) format('woff2');
+    }
+    .material-icons {
+      font-family: 'Material Icons';
+      font-weight: normal;
+      font-style: normal;
+      font-size: 24px;
+      line-height: 1;
+      letter-spacing: normal;
+      text-transform: none;
+      display: inline-block;
+      white-space: nowrap;
+      word-wrap: normal;
+      direction: ltr;
+      -webkit-font-feature-settings: 'liga';
+      -webkit-font-smoothing: antialiased;
+    }
+  </style>
+</head>
+<body>
+
+<canvas id="audioCanvas" width="800" height="400"></canvas>
+
+<div class="control-panel">
+  <div class="tab-buttons">
+    <button id="remoteTabBtn">远程音频</button>
+    <button id="localTabBtn">本地文件</button>
+    <button id="recordTabBtn">实时录音</button>
+  </div>
+
+  <!-- 远程音频Tab -->
+  <div id="remoteTab" class="tab-content active">
+    <audio id="remoteAudio" controls src="https://m10.music.126.net/20250617120948/9c2f13e64471b46f79cf787810bc30af/ymusic/de29/62a8/a1eb/b70f566e9da385f115602d4d74e5dd6c.mp3" crossOrigin="anonymous"></audio>
+    <button id="remoteStartBtn">开始分析</button>
+  </div>
+
+  <!-- 本地文件Tab -->
+  <div id="localTab" class="tab-content active">
+   <div class="localTab-wrap">
+     <div class="file-upload-wrapper">
+       <label for="localFileInput" class="file-upload-label">
+         <i class="material-icons">cloud_upload</i>
+         <span>点击或拖拽音频文件到此处</span>
+         <small>支持MP3、WAV、OGG等格式</small>
+       </label>
+       <input type="file" id="localFileInput" accept="audio/*">
+     </div>
+     <div id="localFileInfo">未选择文件</div>
+     <button id="localStartBtn" disabled>开始分析</button>
+   </div>
+  </div>
+
+  <!-- 实时录音Tab -->
+  <div id="recordTab" class="tab-content">
+    <button id="recordStartBtn">开始录音</button>
+    <button id="recordStopBtn" disabled>停止录音</button>
+    <div id="recordingStatus">准备录音</div>
+  </div>
+</div>
+
+<script>
+  // 获取DOM元素
+  const canvas = document.getElementById('audioCanvas');
+  const canvasCtx = canvas.getContext('2d');
+
+  // Tab相关元素
+  const remoteTabBtn = document.getElementById('remoteTabBtn');
+  const localTabBtn = document.getElementById('localTabBtn');
+  const recordTabBtn = document.getElementById('recordTabBtn');
+  const remoteTab = document.getElementById('remoteTab');
+  const localTab = document.getElementById('localTab');
+  const recordTab = document.getElementById('recordTab');
+
+  // 远程音频元素
+  const remoteAudio = document.getElementById('remoteAudio');
+  const remoteStartBtn = document.getElementById('remoteStartBtn');
+
+  // 本地文件元素
+  const localFileInput = document.getElementById('localFileInput');
+  const localFileInfo = document.getElementById('localFileInfo');
+  const localStartBtn = document.getElementById('localStartBtn');
+  // 文件拖拽功能增强
+  const fileUploadLabel = document.querySelector('.file-upload-label');
+
+  // 录音元素
+  const recordStartBtn = document.getElementById('recordStartBtn');
+  const recordStopBtn = document.getElementById('recordStopBtn');
+  const recordingStatus = document.getElementById('recordingStatus');
+
+  // 音频分析相关变量
+  let audioContext;
+  let analyser;
+  let source;
+  let frequencyData;
+  let animationId;
+
+  // 录音相关变量
+  let mediaStream;
+  let mediaRecorder;
+  let audioChunks = [];
+
+  // 切换Tab
+  function switchTab(tab) {
+    remoteTab.classList.remove('active');
+    localTab.classList.remove('active');
+    recordTab.classList.remove('active');
+
+    if (tab === 'remote') {
+      remoteTab.classList.add('active');
+    } else if (tab === 'local') {
+      localTab.classList.add('active');
+    } else if (tab === 'record') {
+      recordTab.classList.add('active');
+    }
+
+    // 停止当前的分析
+    stopAnalysis();
+  }
+
+  // 停止分析
+  function stopAnalysis() {
+    if (animationId) {
+      cancelAnimationFrame(animationId);
+      animationId = null;
+    }
+
+    if (source) {
+      if (source.mediaElement) {
+        source.mediaElement.pause();
+      }
+      if (source.stop) {
+        source.stop();
+      }
+      source.disconnect();
+      source = null;
+    }
+
+    if (mediaStream) {
+      mediaStream.getTracks().forEach(track => track.stop());
+      mediaStream = null;
+    }
+
+    // 清空画布
+    canvasCtx.fillStyle = 'rgb(0, 0, 0)';
+    canvasCtx.fillRect(0, 0, canvas.width, canvas.height);
+  }
+
+  // 初始化音频分析
+  function initAudioAnalysis() {
+    if (!audioContext) {
+      audioContext = new (window.AudioContext || window.webkitAudioContext)();
+      analyser = audioContext.createAnalyser();
+      analyser.fftSize = 512;
+      frequencyData = new Uint8Array(analyser.frequencyBinCount);
+    }
+  }
+
+  // 绘制频谱
+  function draw() {
+    animationId = requestAnimationFrame(draw);
+
+    analyser.getByteFrequencyData(frequencyData);
+
+    canvasCtx.fillStyle = 'rgb(0, 0, 0)';
+    canvasCtx.fillRect(0, 0, canvas.width, canvas.height);
+
+    const barWidth = (canvas.width / frequencyData.length) * 1.5;
+    let barHeight;
+    let x = 0;
+
+    for (let i = 0; i < frequencyData.length; i++) {
+      barHeight = frequencyData[i] * 1.5;
+      canvasCtx.fillStyle = `rgb(50, ${barHeight + 100}, 50)`;
+      canvasCtx.fillRect(x, canvas.height - barHeight, barWidth, barHeight);
+      x += barWidth + 1;
+    }
+  }
+
+  // 远程音频分析
+  remoteStartBtn.addEventListener('click', () => {
+    stopAnalysis();
+    initAudioAnalysis();
+
+    source = audioContext.createMediaElementSource(remoteAudio);
+    source.connect(analyser);
+    analyser.connect(audioContext.destination);
+
+    remoteAudio.play();
+    draw();
+  });
+
+  // 本地文件分析
+  localStartBtn.addEventListener('click', () => {
+    const file = localFileInput.files[0];
+    if (!file) return;
+
+    stopAnalysis();
+    initAudioAnalysis();
+
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      audioContext.decodeAudioData(e.target.result)
+        .then((audioBuffer) => {
+          source = audioContext.createBufferSource();
+          source.buffer = audioBuffer;
+          source.connect(analyser);
+          analyser.connect(audioContext.destination);
+
+          source.start(0);
+          draw();
+        })
+        .catch(err => {
+          console.error('Error decoding audio data', err);
+          localFileInfo.textContent = '音频解码失败';
+        });
+    };
+    reader.onerror = () => {
+      localFileInfo.textContent = '文件读取失败';
+    };
+    reader.readAsArrayBuffer(file);
+  });
+
+  // 拖拽效果
+  fileUploadLabel.addEventListener('dragover', (e) => {
+    e.preventDefault();
+    fileUploadLabel.style.backgroundColor = 'rgba(76, 175, 80, 0.3)';
+    fileUploadLabel.style.borderColor = '#3e8e41';
+  });
+  fileUploadLabel.addEventListener('dragleave', () => {
+    fileUploadLabel.style.backgroundColor = 'rgba(76, 175, 80, 0.1)';
+    fileUploadLabel.style.borderColor = '#4CAF50';
+  });
+  fileUploadLabel.addEventListener('drop', (e) => {
+    e.preventDefault();
+    fileUploadLabel.style.backgroundColor = 'rgba(76, 175, 80, 0.1)';
+    fileUploadLabel.style.borderColor = '#4CAF50';
+
+    if (e.dataTransfer.files.length) {
+      localFileInput.files = e.dataTransfer.files;
+      updateFileInfo();
+    }
+  });
+  // 文件选择变化时更新信息
+  localFileInput.addEventListener('change', updateFileInfo);
+  function updateFileInfo() {
+    const file = localFileInput.files[0];
+    if (file) {
+      localFileInfo.textContent = `已选择: ${file.name} (${formatFileSize(file.size)})`;
+      localStartBtn.disabled = false;
+
+      // 更新标签显示
+      fileUploadLabel.innerHTML = `
+        <i class="material-icons">check_circle</i>
+        <span>${file.name}</span>
+        <small>${formatFileSize(file.size)}</small>
+      `;
+    } else {
+      localFileInfo.textContent = '未选择文件';
+      localStartBtn.disabled = true;
+
+      // 恢复默认标签显示
+      fileUploadLabel.innerHTML = `
+        <i class="material-icons">cloud_upload</i>
+        <span>点击或拖拽音频文件到此处</span>
+        <small>支持MP3、WAV、OGG等格式</small>
+      `;
+    }
+  }
+  // 格式化文件大小
+  function formatFileSize(bytes) {
+    if (bytes === 0) return '0 Bytes';
+    const k = 1024;
+    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+  }
+
+  // 实时录音分析
+  recordStartBtn.addEventListener('click', async () => {
+    try {
+      stopAnalysis();
+      initAudioAnalysis();
+
+      mediaStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      recordingStatus.textContent = "录音中...";
+      recordStartBtn.disabled = true;
+      recordStopBtn.disabled = false;
+
+      source = audioContext.createMediaStreamSource(mediaStream);
+      source.connect(analyser);
+      analyser.connect(audioContext.destination);
+
+      draw();
+    } catch (err) {
+      console.error('Error accessing microphone', err);
+      recordingStatus.textContent = "无法访问麦克风";
+    }
+  });
+
+  recordStopBtn.addEventListener('click', () => {
+    stopAnalysis();
+    recordingStatus.textContent = "录音已停止";
+    recordStartBtn.disabled = false;
+    recordStopBtn.disabled = true;
+  });
+
+  // Tab切换事件
+  remoteTabBtn.addEventListener('click', () => switchTab('remote'));
+  localTabBtn.addEventListener('click', () => switchTab('local'));
+  recordTabBtn.addEventListener('click', () => switchTab('record'));
+
+  // 初始化
+  switchTab('remote');
+</script>
+</body>
+</html>
