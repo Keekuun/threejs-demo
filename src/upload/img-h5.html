@@ -47,11 +47,23 @@
       padding: 20px;
       margin-bottom: 20px;
       position: relative;
+      user-select: none;
     }
 
     .paste-area.active {
       background-color: rgba(7, 193, 96, 0.05);
       border-color: #06AD56;
+    }
+
+    .paste-area input {
+      width: 100%;
+      height: 100%;
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      opacity: 0;
     }
 
     .paste-icon {
@@ -221,6 +233,7 @@
       <div class="paste-icon">📋</div>
       <div class="paste-text">长按此区域粘贴图片</div>
       <div class="paste-hint">从相册复制图片后，在此处长按选择"粘贴"</div>
+      <input type="text">
     </div>
 
     <div class="or-divider">或</div>
