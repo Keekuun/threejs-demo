@@ -1,0 +1,417 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>图片上传</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      background-color: #f8f8f8;
+      color: #333;
+      line-height: 1.5;
+      padding: 20px;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    .container {
+      max-width: 100%;
+      margin: 0 auto;
+    }
+
+    h1 {
+      font-size: 22px;
+      margin-bottom: 20px;
+      text-align: center;
+      color: #333;
+    }
+
+    .upload-section {
+      background-color: #fff;
+      border-radius: 12px;
+      padding: 25px;
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+      margin-bottom: 20px;
+    }
+
+    .paste-area {
+      text-align: center;
+      border: 2px dashed #07C160;
+      border-radius: 8px;
+      padding: 20px;
+      margin-bottom: 20px;
+      position: relative;
+    }
+
+    .paste-area.active {
+      background-color: rgba(7, 193, 96, 0.05);
+      border-color: #06AD56;
+    }
+
+    .paste-icon {
+      font-size: 48px;
+      color: #07C160;
+      margin-bottom: 15px;
+    }
+
+    .paste-text {
+      font-size: 16px;
+      color: #333;
+      margin-bottom: 8px;
+      font-weight: 500;
+    }
+
+    .paste-hint {
+      font-size: 14px;
+      color: #999;
+      margin-bottom: 0;
+    }
+
+    .or-divider {
+      display: flex;
+      align-items: center;
+      margin: 20px 0;
+      color: #999;
+      font-size: 14px;
+    }
+
+    .or-divider::before, .or-divider::after {
+      content: "";
+      flex: 1;
+      height: 1px;
+      background: #eee;
+    }
+
+    .or-divider::before {
+      margin-right: 15px;
+    }
+
+    .or-divider::after {
+      margin-left: 15px;
+    }
+
+    .btn {
+      display: inline-block;
+      background-color: #07C160;
+      color: white;
+      border: none;
+      padding: 12px 24px;
+      border-radius: 25px;
+      font-size: 16px;
+      font-weight: 500;
+      cursor: pointer;
+      width: 100%;
+      transition: background-color 0.2s;
+      -webkit-appearance: none;
+    }
+
+    .btn:active {
+      background-color: #06AD56;
+    }
+
+    .btn:disabled {
+      background-color: #ccc;
+      cursor: not-allowed;
+    }
+
+    .btn-secondary {
+      background-color: #f5f5f5;
+      color: #666;
+      margin-top: 10px;
+    }
+
+    .btn-secondary:active {
+      background-color: #e5e5e5;
+    }
+
+    .preview-container {
+      display: none;
+      margin-top: 20px;
+      text-align: center;
+      position: relative;
+    }
+
+    .preview-image {
+      max-width: 100%;
+      max-height: 300px;
+      border-radius: 8px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    }
+
+    .file-info {
+      margin-top: 15px;
+      font-size: 14px;
+      color: #666;
+      text-align: left;
+      background-color: #f5f5f5;
+      padding: 12px;
+      border-radius: 8px;
+    }
+
+    .file-info strong {
+      color: #333;
+    }
+
+    .delete-btn {
+      position: absolute;
+      top: -10px;
+      right: -10px;
+      width: 30px;
+      height: 30px;
+      background-color: #ff4d4f;
+      color: white;
+      border-radius: 50%;
+      border: none;
+      font-size: 16px;
+      cursor: pointer;
+      box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+      z-index: 1;
+    }
+
+    .delete-btn:active {
+      background-color: #d9363e;
+    }
+
+    .hidden-input {
+      display: none;
+    }
+
+    .toast {
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      background-color: rgba(0, 0, 0, 0.7);
+      color: white;
+      padding: 12px 20px;
+      border-radius: 4px;
+      font-size: 14px;
+      z-index: 1000;
+      display: none;
+    }
+
+    .loading {
+      display: none;
+      margin: 20px auto;
+      width: 30px;
+      height: 30px;
+      border: 3px solid rgba(7, 193, 96, 0.2);
+      border-radius: 50%;
+      border-top-color: #07C160;
+      animation: spin 1s ease-in-out infinite;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+  </style>
+</head>
+<body>
+<div class="container">
+  <h1>图片上传</h1>
+
+  <div class="upload-section">
+    <div class="paste-area" id="pasteArea">
+      <div class="paste-icon">📋</div>
+      <div class="paste-text">长按此区域粘贴图片</div>
+      <div class="paste-hint">从相册复制图片后，在此处长按选择"粘贴"</div>
+    </div>
+
+    <div class="or-divider">或</div>
+
+    <button id="selectBtn" class="btn">选择图片</button>
+    <input type="file" id="fileInput" class="hidden-input" accept="image/*">
+  </div>
+
+  <div class="preview-container" id="previewContainer">
+    <button class="delete-btn" id="deleteBtn">×</button>
+    <img id="previewImage" class="preview-image" src="" alt="预览">
+    <div class="file-info" id="fileInfo"></div>
+  </div>
+
+  <div class="loading" id="loading"></div>
+
+  <button id="uploadBtn" class="btn" disabled>上传图片</button>
+  <button id="cancelBtn" class="btn btn-secondary" disabled>取消</button>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+  // 获取DOM元素
+  const pasteArea = document.getElementById('pasteArea');
+  const fileInput = document.getElementById('fileInput');
+  const selectBtn = document.getElementById('selectBtn');
+  const previewContainer = document.getElementById('previewContainer');
+  const previewImage = document.getElementById('previewImage');
+  const fileInfo = document.getElementById('fileInfo');
+  const uploadBtn = document.getElementById('uploadBtn');
+  const cancelBtn = document.getElementById('cancelBtn');
+  const deleteBtn = document.getElementById('deleteBtn');
+  const loading = document.getElementById('loading');
+  const toast = document.getElementById('toast');
+
+  let currentFile = null;
+
+  // 显示提示信息
+  function showToast(message, duration = 2000) {
+    toast.textContent = message;
+    toast.style.display = 'block';
+    setTimeout(() => {
+      toast.style.display = 'none';
+    }, duration);
+  }
+
+  // 长按事件处理
+  let longPressTimer;
+  const LONG_PRESS_DURATION = 300; // 300毫秒视为长按
+
+  pasteArea.addEventListener('touchstart', (e) => {
+    longPressTimer = setTimeout(() => {
+      pasteArea.classList.add('active');
+      showToast('请选择"粘贴"选项');
+    }, LONG_PRESS_DURATION);
+  });
+
+  pasteArea.addEventListener('touchend', (e) => {
+    clearTimeout(longPressTimer);
+    pasteArea.classList.remove('active');
+  });
+
+  pasteArea.addEventListener('touchmove', (e) => {
+    clearTimeout(longPressTimer);
+    pasteArea.classList.remove('active');
+  });
+
+  // 点击选择按钮
+  selectBtn.addEventListener('click', () => {
+    fileInput.click();
+  });
+
+  // 文件选择处理
+  fileInput.addEventListener('change', (e) => {
+    if (e.target.files.length > 0) {
+      handleFile(e.target.files[0]);
+    }
+  });
+
+  // 监听粘贴事件
+  document.addEventListener('paste', (e) => {
+    // 检查是否有图片数据
+    if (e.clipboardData && e.clipboardData.items) {
+      for (let i = 0; i < e.clipboardData.items.length; i++) {
+        const item = e.clipboardData.items[i];
+        if (item.type.indexOf('image') !== -1) {
+          const blob = item.getAsFile();
+          const file = new File([blob], `pasted-image-${Date.now()}.${blob.type.split('/')[1] || 'png'}`, {
+            type: blob.type
+          });
+          handleFile(file);
+          showToast('已粘贴图片');
+          break;
+        }
+      }
+    }
+  });
+
+  // 处理文件函数
+  function handleFile(file) {
+    // 检查是否为图片
+    if (!file.type.match('image.*')) {
+      showToast('请选择图片文件');
+      return;
+    }
+
+    // 检查文件大小 (限制5MB)
+    if (file.size > 5 * 1024 * 1024) {
+      showToast('图片大小不能超过5MB');
+      return;
+    }
+
+    currentFile = file;
+
+    // 显示加载中
+    loading.style.display = 'block';
+
+    // 显示预览
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      previewImage.src = e.target.result;
+      previewContainer.style.display = 'block';
+
+      // 显示文件信息
+      fileInfo.innerHTML = `
+          <strong>文件名:</strong> ${file.name}<br>
+          <strong>类型:</strong> ${file.type}<br>
+          <strong>大小:</strong> ${formatFileSize(file.size)}
+        `;
+
+      uploadBtn.disabled = false;
+      cancelBtn.disabled = false;
+      loading.style.display = 'none';
+    };
+    reader.onerror = () => {
+      showToast('图片读取失败');
+      loading.style.display = 'none';
+    };
+    reader.readAsDataURL(file);
+  }
+
+  // 删除按钮点击
+  deleteBtn.addEventListener('click', resetUploader);
+
+  // 取消按钮点击
+  cancelBtn.addEventListener('click', resetUploader);
+
+  // 上传按钮点击
+  uploadBtn.addEventListener('click', () => {
+    if (!currentFile) return;
+
+    // 显示加载中
+    loading.style.display = 'block';
+    uploadBtn.disabled = true;
+    cancelBtn.disabled = true;
+
+    // 这里可以添加实际的上传逻辑
+    // 模拟上传过程
+    setTimeout(() => {
+      loading.style.display = 'none';
+      showToast('上传成功');
+      console.log('上传文件:', currentFile);
+
+      // 重置表单
+      setTimeout(resetUploader, 1000);
+    }, 1500);
+  });
+
+  // 格式化文件大小
+  function formatFileSize(bytes) {
+    if (bytes === 0) return '0 Bytes';
+    const k = 1024;
+    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+  }
+
+  // 重置上传器
+  function resetUploader() {
+    currentFile = null;
+    previewImage.src = '';
+    previewContainer.style.display = 'none';
+    fileInput.value = '';
+    uploadBtn.disabled = true;
+    cancelBtn.disabled = true;
+    loading.style.display = 'none';
+  }
+
+  // 初始化提示
+  showToast('支持粘贴图片或手动选择图片上传', 3000);
+</script>
+</body>
+</html>
