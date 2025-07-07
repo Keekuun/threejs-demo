@@ -1,0 +1,259 @@
+<!-- index.html -->
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>HTML to PDF Demo</title>
+</head>
+<style>
+  :root {
+    font-family: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
+    line-height: 1.5;
+    font-weight: 400;
+    color-scheme: light dark;
+    color: rgba(255, 255, 255, 0.87);
+    background-color: #242424;
+  }
+
+  body {
+    margin: 0;
+    display: flex;
+    place-items: center;
+    min-width: 320px;
+    min-height: 100vh;
+  }
+
+  #app {
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 2rem;
+    text-align: center;
+  }
+
+  /* PDF 内容区域的样式 */
+  #pdf-content {
+    background-color: #ffffff;
+    color: #333333;
+    padding: 2rem;
+    margin-top: 2rem;
+    border-radius: 8px;
+    text-align: left;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+  }
+
+  #pdf-content h2, #pdf-content h3 {
+    color: #1a1a1a;
+    border-bottom: 2px solid #eaeaea;
+    padding-bottom: 8px;
+    margin-top: 1.5em;
+  }
+
+  #pdf-content ul {
+    padding-left: 20px;
+  }
+
+  #pdf-content table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 1em;
+  }
+
+  #pdf-content th, #pdf-content td {
+    border: 1px solid #dddddd;
+    padding: 12px;
+    text-align: left;
+  }
+
+  #pdf-content thead {
+    background-color: #f2f2f2;
+    font-weight: bold;
+  }
+
+  #export-pdf-btn {
+    padding: 10px 20px;
+    font-size: 16px;
+    cursor: pointer;
+    border-radius: 8px;
+    border: 1px solid transparent;
+    transition: border-color 0.25s;
+  }
+  #export-pdf-btn:hover {
+    border-color: #646cff;
+  }
+  #export-pdf-btn:disabled {
+    cursor: not-allowed;
+    opacity: 0.7;
+  }
+</style>
+<body>
+<div id="app">
+  <h1>HTML DOM 转 PDF 演示</h1>
+  <p>点击下方按钮，将指定区域的内容导出为 PDF 文件。</p>
+  <!-- 导出按钮 -->
+  <button id="export-pdf-btn">生成并下载 PDF</button>
+
+  <hr style="margin: 20px 0;">
+
+  <!-- ======== 这是我们将要导出为 PDF 的区域 ======== -->
+  <div id="pdf-content">
+    <h2>项目报告</h2>
+    <p>这是一个包含文本、图片、列表和表格的综合报告示例。</p>
+
+    <h3>项目图片</h3>
+    <!-- 重要：为了让 html2canvas 能加载跨域图片，请确保图片服务器支持CORS -->
+    <img
+      src="https://images.unsplash.com/photo-1542831371-29b0f74f9713?w=800&q=80"
+      alt="代码图片"
+      style="width: 100%; max-width: 500px; border-radius: 8px;"
+    />
+
+    <h3>功能清单</h3>
+    <ul>
+      <li>用户认证系统</li>
+      <li>数据可视化图表</li>
+      <li>响应式布局，适配移动端和桌面端</li>
+      <li>国际化支持 (i18n)</li>
+    </ul>
+
+    <h3>成员贡献表格</h3>
+    <table>
+      <thead>
+      <tr>
+        <th>成员</th>
+        <th>任务</th>
+        <th>贡献度</th>
+      </tr>
+      </thead>
+      <tbody>
+      <tr>
+        <td>张三</td>
+        <td>前端界面开发</td>
+        <td>40%</td>
+      </tr>
+      <tr>
+        <td>李四</td>
+        <td>后端接口实现</td>
+        <td>35%</td>
+      </tr>
+      <tr>
+        <td>王五</td>
+        <td>项目测试与部署</td>
+        <td>25%</td>
+      </tr>
+      </tbody>
+    </table>
+
+
+    <div>
+      <ul>
+        <li>
+          PDF 类型：此方法生成的 PDF 本质上是图片型PDF。这意味着PDF中的文本不可选中和复制。如果需要生成可搜索、可选择文本的矢量PDF，需要采用更复杂的技术，或使用后端服务（如 Puppeteer）来生成。
+        </li>
+        <li>
+          分页：上面的代码中我加入了一个基础的分页逻辑。它能处理超长的内容，但这种分页方式比较“暴力”，可能会将一张表格或一行文字从中间切开。完美的分页需要精细计算元素位置，或者在设计HTML时就预留好分页符 (page-break-after: always;)。
+        </li>
+        <li>
+          跨域（CORS）：html2canvas 在加载外部资源（如图片）时遵循浏览器的同源策略。如果你使用的图片来自其他域名，请确保该域名的服务器响应头中包含 Access-Control-Allow-Origin: *。示例中使用的 Unsplash 图片服务器是支持 CORS 的。
+        </li>
+        <li>
+          性能：要转换的 DOM 结构越复杂、图片越多，html2canvas 的处理时间就越长。对于非常庞大的页面，可能会导致浏览器短暂卡顿。这也是为什么我们在生成时要禁用按钮并给出提示。
+        </li>
+        <li>
+          动态内容：此方法只能捕获页面在某一时刻的静态快照。CSS 动画、视频、:hover 状态等动态效果无法被正确捕获。
+        </li>
+      </ul>
+      <ul>
+        <li>
+          PDF 类型：此方法生成的 PDF 本质上是图片型PDF。这意味着PDF中的文本不可选中和复制。如果需要生成可搜索、可选择文本的矢量PDF，需要采用更复杂的技术，或使用后端服务（如 Puppeteer）来生成。
+        </li>
+        <li>
+          分页：上面的代码中我加入了一个基础的分页逻辑。它能处理超长的内容，但这种分页方式比较“暴力”，可能会将一张表格或一行文字从中间切开。完美的分页需要精细计算元素位置，或者在设计HTML时就预留好分页符 (page-break-after: always;)。
+        </li>
+        <li>
+          跨域（CORS）：html2canvas 在加载外部资源（如图片）时遵循浏览器的同源策略。如果你使用的图片来自其他域名，请确保该域名的服务器响应头中包含 Access-Control-Allow-Origin: *。示例中使用的 Unsplash 图片服务器是支持 CORS 的。
+        </li>
+        <li>
+          性能：要转换的 DOM 结构越复杂、图片越多，html2canvas 的处理时间就越长。对于非常庞大的页面，可能会导致浏览器短暂卡顿。这也是为什么我们在生成时要禁用按钮并给出提示。
+        </li>
+        <li>
+          动态内容：此方法只能捕获页面在某一时刻的静态快照。CSS 动画、视频、:hover 状态等动态效果无法被正确捕获。
+        </li>
+      </ul>
+      <ul>
+        <li>
+          PDF 类型：此方法生成的 PDF 本质上是图片型PDF。这意味着PDF中的文本不可选中和复制。如果需要生成可搜索、可选择文本的矢量PDF，需要采用更复杂的技术，或使用后端服务（如 Puppeteer）来生成。
+        </li>
+        <li>
+          分页：上面的代码中我加入了一个基础的分页逻辑。它能处理超长的内容，但这种分页方式比较“暴力”，可能会将一张表格或一行文字从中间切开。完美的分页需要精细计算元素位置，或者在设计HTML时就预留好分页符 (page-break-after: always;)。
+        </li>
+        <li>
+          跨域（CORS）：html2canvas 在加载外部资源（如图片）时遵循浏览器的同源策略。如果你使用的图片来自其他域名，请确保该域名的服务器响应头中包含 Access-Control-Allow-Origin: *。示例中使用的 Unsplash 图片服务器是支持 CORS 的。
+        </li>
+        <li>
+          性能：要转换的 DOM 结构越复杂、图片越多，html2canvas 的处理时间就越长。对于非常庞大的页面，可能会导致浏览器短暂卡顿。这也是为什么我们在生成时要禁用按钮并给出提示。
+        </li>
+        <li>
+          动态内容：此方法只能捕获页面在某一时刻的静态快照。CSS 动画、视频、:hover 状态等动态效果无法被正确捕获。
+        </li>
+      </ul>
+      <ul>
+        <li>
+          PDF 类型：此方法生成的 PDF 本质上是图片型PDF。这意味着PDF中的文本不可选中和复制。如果需要生成可搜索、可选择文本的矢量PDF，需要采用更复杂的技术，或使用后端服务（如 Puppeteer）来生成。
+        </li>
+        <li>
+          分页：上面的代码中我加入了一个基础的分页逻辑。它能处理超长的内容，但这种分页方式比较“暴力”，可能会将一张表格或一行文字从中间切开。完美的分页需要精细计算元素位置，或者在设计HTML时就预留好分页符 (page-break-after: always;)。
+        </li>
+        <li>
+          跨域（CORS）：html2canvas 在加载外部资源（如图片）时遵循浏览器的同源策略。如果你使用的图片来自其他域名，请确保该域名的服务器响应头中包含 Access-Control-Allow-Origin: *。示例中使用的 Unsplash 图片服务器是支持 CORS 的。
+        </li>
+        <li>
+          性能：要转换的 DOM 结构越复杂、图片越多，html2canvas 的处理时间就越长。对于非常庞大的页面，可能会导致浏览器短暂卡顿。这也是为什么我们在生成时要禁用按钮并给出提示。
+        </li>
+        <li>
+          动态内容：此方法只能捕获页面在某一时刻的静态快照。CSS 动画、视频、:hover 状态等动态效果无法被正确捕获。
+        </li>
+      </ul>
+      <ul>
+        <li>
+          PDF 类型：此方法生成的 PDF 本质上是图片型PDF。这意味着PDF中的文本不可选中和复制。如果需要生成可搜索、可选择文本的矢量PDF，需要采用更复杂的技术，或使用后端服务（如 Puppeteer）来生成。
+        </li>
+        <li>
+          分页：上面的代码中我加入了一个基础的分页逻辑。它能处理超长的内容，但这种分页方式比较“暴力”，可能会将一张表格或一行文字从中间切开。完美的分页需要精细计算元素位置，或者在设计HTML时就预留好分页符 (page-break-after: always;)。
+        </li>
+        <li>
+          跨域（CORS）：html2canvas 在加载外部资源（如图片）时遵循浏览器的同源策略。如果你使用的图片来自其他域名，请确保该域名的服务器响应头中包含 Access-Control-Allow-Origin: *。示例中使用的 Unsplash 图片服务器是支持 CORS 的。
+        </li>
+        <li>
+          性能：要转换的 DOM 结构越复杂、图片越多，html2canvas 的处理时间就越长。对于非常庞大的页面，可能会导致浏览器短暂卡顿。这也是为什么我们在生成时要禁用按钮并给出提示。
+        </li>
+        <li>
+          动态内容：此方法只能捕获页面在某一时刻的静态快照。CSS 动画、视频、:hover 状态等动态效果无法被正确捕获。
+        </li>
+      </ul>
+      <ul>
+        <li>
+          PDF 类型：此方法生成的 PDF 本质上是图片型PDF。这意味着PDF中的文本不可选中和复制。如果需要生成可搜索、可选择文本的矢量PDF，需要采用更复杂的技术，或使用后端服务（如 Puppeteer）来生成。
+        </li>
+        <li>
+          分页：上面的代码中我加入了一个基础的分页逻辑。它能处理超长的内容，但这种分页方式比较“暴力”，可能会将一张表格或一行文字从中间切开。完美的分页需要精细计算元素位置，或者在设计HTML时就预留好分页符 (page-break-after: always;)。
+        </li>
+        <li>
+          跨域（CORS）：html2canvas 在加载外部资源（如图片）时遵循浏览器的同源策略。如果你使用的图片来自其他域名，请确保该域名的服务器响应头中包含 Access-Control-Allow-Origin: *。示例中使用的 Unsplash 图片服务器是支持 CORS 的。
+        </li>
+        <li>
+          性能：要转换的 DOM 结构越复杂、图片越多，html2canvas 的处理时间就越长。对于非常庞大的页面，可能会导致浏览器短暂卡顿。这也是为什么我们在生成时要禁用按钮并给出提示。
+        </li>
+        <li>
+          动态内容：此方法只能捕获页面在某一时刻的静态快照。CSS 动画、视频、:hover 状态等动态效果无法被正确捕获。
+        </li>
+      </ul>
+    </div>
+  </div>
+  <!-- ======== 导出区域结束 ======== -->
+
+</div>
+<script type="module" src="./img-pdf.ts"></script>
+</body>
+</html>
